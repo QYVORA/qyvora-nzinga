@@ -1,0 +1,60 @@
+# NZINGA configuration example
+# Copy to ~/.config/qyvora/nzinga/config.yaml (or ~/.qyvora-nzinga/config.yaml)
+# and edit. Values here match the keys loaded by internal/config; any key the
+# framework does not read is ignored. Configuration precedence (highest first):
+#   environment (QYVORA_NZINGA_*) > config file > built-in defaults.
+
+# Collection profile. Controls how deep a run goes:
+#   quick | standard | deep
+profile: standard
+
+# Default output format for the CLI: terminal (aliases: table, text) |
+# json | yaml | markdown | html.
+output: terminal
+
+# Logging level: debug | info | warn | error | silent
+log:
+  level: info
+
+# Mark all runs as pre-authorized. Strong statement: only enable in
+# environments you control and hold written authorization for. Equivalent to
+# passing -y on every command.
+authorized: false
+
+# Flags: equivalents of the --verbose / --quiet / --json CLI flags.
+verbose: false
+quiet: false
+json: false
+
+# Reporting: directory reports are written to, and the default format used
+# by `report` when no --format flag is given.
+report:
+  dir: reports
+  format: terminal   # terminal | json | markdown | html | yaml
+
+# Session persistence. Empty = default working-directory ./sessions.
+session:
+  dir: ""
+
+# Network-layer collection tuning shared by all HTTP/TCP sources.
+collection:
+  timeout_seconds: 15
+  user_agent: "QYVORA-NZINGA/1.0 (authorized osint; contact owner before use)"
+  max_response_bytes: 1048576   # per HTTP response body cap
+  redirects: false              # never follow off-origin redirects (SSRF guard)
+  http_proxy: ""                # e.g. http://127.0.0.1:8080
+
+# Per-source enablement and overrides. Each source also honours the shared
+# collection.timeout_seconds unless overridden here.
+sources:
+  crt_sh:
+    enabled: true
+  dns:
+    enabled: true
+    resolvers: []              # empty = system resolvers
+  whois:
+    enabled: true
+    port: 43
+  github:
+    enabled: true
+    token: ""                  # optional authenticated rate limit
