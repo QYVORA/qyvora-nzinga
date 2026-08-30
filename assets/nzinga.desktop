@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=NZINGA
+GenericName=OSINT Intelligence Framework
+Comment=Authorized open-source intelligence collection, cross-source correlation, and evidence-driven reporting
+Exec=@PREFIX@/bin/nzinga
+Icon=@PREFIX@/share/icons/hicolor/512x512/apps/nzinga.png
+Terminal=true
+Categories=Development;Security;Utility;
+Keywords=osint;intelligence;reconnaissance;enumeration;correlation;audit;
