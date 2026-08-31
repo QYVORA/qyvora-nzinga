@@ -43,9 +43,9 @@ func (u *consoleUI) BannerFoot(version string) {
 
 // HUD renders the always-on status line.
 func (u *consoleUI) HUD(target, profile, cwd, version string) {
-	line := fmt.Sprintf("[target: %s] [profile: %s] [cwd: %s] [%s]", target, profile, cwd, version)
-	_, _ = fmt.Fprintln(u.out, amber.Sprintf("─ %s", line))
-	_, _ = fmt.Fprintln(u.out, strings.Repeat("─", 68))
+	line := fmt.Sprintf("target: %s · profile: %s · cwd: %s · %s", target, profile, cwd, version)
+	_, _ = fmt.Fprintln(u.out, amber.Sprint(line))
+	_, _ = fmt.Fprintln(u.out)
 }
 
 // Status prints a status line with a symbol.
@@ -63,9 +63,9 @@ func (u *consoleUI) Err(format string, args ...any) {
 	_, _ = fmt.Fprintf(u.out, " %s %s\n", color.RedString("!"), fmt.Sprintf(format, args...))
 }
 
-// Section prints a section header.
+// Section prints a clean section header.
 func (u *consoleUI) Section(name string) {
-	_, _ = fmt.Fprintf(u.out, "== %s ==\n", amber.Sprint(name))
+	_, _ = fmt.Fprintf(u.out, "\n  %s\n", amber.Sprint(strings.ToUpper(name)))
 }
 
 // Table prints a simple aligned table.
@@ -86,7 +86,6 @@ func (u *consoleUI) Table(header []string, rows [][]string) {
 		hdr += fmt.Sprintf("%-*s  ", colWidths[i], amber.Sprint(h))
 	}
 	_, _ = fmt.Fprintln(u.out, hdr)
-	_, _ = fmt.Fprintln(u.out, strings.Repeat("─", sumWidths(colWidths)+len(colWidths)*2))
 	for _, row := range rows {
 		line := ""
 		for i, cell := range row {
@@ -96,17 +95,9 @@ func (u *consoleUI) Table(header []string, rows [][]string) {
 	}
 }
 
-// Rule prints a horizontal rule.
+// Rule prints a soft section break — a blank line, never a rule line.
 func (u *consoleUI) Rule() {
-	_, _ = fmt.Fprintln(u.out, strings.Repeat("─", 68))
-}
-
-func sumWidths(widths []int) int {
-	total := 0
-	for _, w := range widths {
-		total += w
-	}
-	return total
+	_, _ = fmt.Fprintln(u.out)
 }
 
 // outline prints a banner line with the amber accent, honoring NO_COLOR.
