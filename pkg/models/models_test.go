@@ -83,10 +83,10 @@ func TestSessionPersistenceRoundtrip(t *testing.T) {
 }
 
 func TestConfidenceOrdering(t *testing.T) {
-	if !(ConfidenceConfirmed.Rank() > ConfidenceObserved.Rank()) {
+	if ConfidenceConfirmed.Rank() <= ConfidenceObserved.Rank() {
 		t.Fatal("confirmed should rank above observed")
 	}
-	if !(ConfidenceNotObserved.Rank() < ConfidenceUnknown.Rank()) {
+	if ConfidenceNotObserved.Rank() >= ConfidenceUnknown.Rank() {
 		t.Fatal("not_observed is the weakest claim")
 	}
 	if ConfidenceCombined := ConfidenceObserved.Combined(ConfidenceProbable); ConfidenceCombined != ConfidenceObserved {

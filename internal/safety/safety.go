@@ -74,5 +74,5 @@ func IsAllowed(op OperationMetadata, safeOnly bool) bool {
 	if safeOnly && op.Risk.Rank() >= models.RiskS3.Rank() {
 		return false
 	}
-	return op.ChangesState == false || op.Reversible
+	return !op.ChangesState || op.Reversible
 }

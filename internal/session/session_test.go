@@ -62,7 +62,7 @@ func TestListNewestFirstByMtime(t *testing.T) {
 			t.Fatal(err)
 		}
 		stamp := now.Add(time.Duration(i) * time.Second)
-		os.Chtimes(filepath.Join(dir, id+".session.json"), stamp, stamp)
+		_ = os.Chtimes(filepath.Join(dir, id+".session.json"), stamp, stamp)
 	}
 	ids, err := store.List()
 	if err != nil {

@@ -191,7 +191,7 @@ func (c *nzingaConsole) exec(line string) (bool, error) {
 		return false, nil
 	case "history":
 		for i, h := range c.history {
-			fmt.Fprintf(c.out, "  %3d  %s\n", i+1, h)
+			_, _ = fmt.Fprintf(c.out, "  %3d  %s\n", i+1, h)
 		}
 		return false, nil
 	case "pwd":

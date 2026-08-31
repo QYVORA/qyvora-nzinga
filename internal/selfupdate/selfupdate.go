@@ -184,7 +184,7 @@ func fetch(ctx context.Context, url string, out io.Writer) ([]byte, error) {
 	if err != nil {
 		return nil, upErr(KindNetwork, "download failed: "+err.Error(), err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, upErr(KindAPI, "download returned "+resp.Status, nil)
 	}

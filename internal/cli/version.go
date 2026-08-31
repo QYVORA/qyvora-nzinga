@@ -25,12 +25,12 @@ func printVersion(i version.Info) {
 	case outputFormatJSON, outputFormatYAML:
 		app.printer.Print(i)
 	default:
-		fmt.Fprintf(app.printer.Writer(), "nzinga %s\n", version.String())
-		fmt.Fprintf(app.printer.Writer(), "  framework:  %s\n", i.Framework)
-		fmt.Fprintf(app.printer.Writer(), "  commit:     %s\n", shortCommit(i.Commit))
-		fmt.Fprintf(app.printer.Writer(), "  built:      %s\n", emptyDash(i.Date))
-		fmt.Fprintf(app.printer.Writer(), "  by:         %s\n", emptyDash(i.BuildUser))
-		fmt.Fprintf(app.printer.Writer(), "  go:         %s %s/%s\n", i.GoVersion, i.OS, i.Arch)
+		_, _ = fmt.Fprintf(app.printer.Writer(), "nzinga %s\n", version.String())
+		_, _ = fmt.Fprintf(app.printer.Writer(), "  framework:  %s\n", i.Framework)
+		_, _ = fmt.Fprintf(app.printer.Writer(), "  commit:     %s\n", shortCommit(i.Commit))
+		_, _ = fmt.Fprintf(app.printer.Writer(), "  built:      %s\n", emptyDash(i.Date))
+		_, _ = fmt.Fprintf(app.printer.Writer(), "  by:         %s\n", emptyDash(i.BuildUser))
+		_, _ = fmt.Fprintf(app.printer.Writer(), "  go:         %s %s/%s\n", i.GoVersion, i.OS, i.Arch)
 	}
 }
 

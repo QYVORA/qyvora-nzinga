@@ -57,7 +57,7 @@ func (c *ReleasesClient) Latest(ctx context.Context) (*Release, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == http.StatusForbidden {
 		return nil, upErr(KindRateLimited, "GitHub API rate limited", nil)
 	}

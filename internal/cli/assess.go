@@ -377,10 +377,6 @@ func (a *appState) printerFormat() string {
 	return string(a.printer.Format())
 }
 
-func (a *appState) sessionOutputDir() string {
-	return a.cfg.GetString("report.dir")
-}
-
 func ctxOf(cmd *cobra.Command) context.Context {
 	if cmd == nil || cmd.Context() == nil {
 		return context.Background()

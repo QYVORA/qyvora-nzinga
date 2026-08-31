@@ -14,7 +14,7 @@ func TestDoAppliesUserAgentAndCap(t *testing.T) {
 	var gotUA string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotUA = r.UserAgent()
-		w.Write([]byte(strings.Repeat("x", 1024)))
+		_, _ = w.Write([]byte(strings.Repeat("x", 1024)))
 	}))
 	defer srv.Close()
 
@@ -36,7 +36,7 @@ func TestDoAppliesUserAgentAndCap(t *testing.T) {
 
 func TestDoWithinCap(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 	}))
 	defer srv.Close()
 	c, _ := NewClient(ClientOptions{MaxResponseBytes: 1024})
@@ -44,7 +44,7 @@ func TestDoWithinCap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if string(body) != "ok" || resp.StatusCode != 200 {
 		t.Fatalf("unexpected body/status: %q %d", body, resp.StatusCode)
 	}
@@ -97,7 +97,7 @@ func TestSameOriginRedirectFollowed(t *testing.T) {
 		http.Redirect(w, r, "/final", http.StatusFound)
 	})
 	mux.HandleFunc("/final", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("arrived"))
+		_, _ = w.Write([]byte("arrived"))
 	})
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
@@ -119,7 +119,7 @@ func TestRetryRecoversFromServerError(t *testing.T) {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
-		w.Write([]byte("recovered"))
+		_, _ = w.Write([]byte("recovered"))
 	}))
 	defer srv.Close()
 
@@ -139,7 +139,7 @@ func TestRetryRecoversFromServerError(t *testing.T) {
 func TestStopRetryingOnSuccess(t *testing.T) {
 	var calls atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 		calls.Add(1)
 	}))
 	defer srv.Close()
@@ -173,7 +173,7 @@ func TestProxyOverrideApplies(t *testing.T) {
 	var viaProxy atomic.Bool
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		viaProxy.Store(true)
-		w.Write([]byte("proxied"))
+		_, _ = w.Write([]byte("proxied"))
 	}))
 	defer proxy.Close()
 

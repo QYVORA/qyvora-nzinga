@@ -152,7 +152,7 @@ func (c *Client) doOnce(ctx context.Context, req *http.Request, headers http.Hea
 	if err != nil {
 		return nil, nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	limited := io.LimitReader(resp.Body, c.max+1)
 	body, err := io.ReadAll(limited)

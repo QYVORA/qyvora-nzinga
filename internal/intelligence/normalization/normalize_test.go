@@ -41,13 +41,6 @@ func edge(sess *models.Session, typ models.RelationshipType, from, to string) bo
 	return false
 }
 
-func hostID(sess *models.Session, fqdn string) string {
-	if h := findHost(sess, fqdn); h != nil {
-		return h.ID
-	}
-	return ""
-}
-
 func testObs(key, target, value string) *models.Observation {
 	return &models.Observation{
 		Source:     "test",

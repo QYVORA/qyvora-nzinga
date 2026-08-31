@@ -71,7 +71,7 @@ func (a *appState) persistSession(sess *models.Session) (string, error) {
 }
 
 func (a *appState) emitf(format string, args ...any) {
-	fmt.Fprintf(a.printer.Writer(), format+"\n", args...)
+	_, _ = fmt.Fprintf(a.printer.Writer(), format+"\n", args...)
 }
 
 // resolveEvents configures the event stream sink.

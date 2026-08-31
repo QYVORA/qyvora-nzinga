@@ -116,5 +116,5 @@ func (l *Logger) log(level Level, format string, args ...any) {
 	if !ok {
 		name = "INFO"
 	}
-	fmt.Fprintf(l.w, "[nzinga][%s] %s\n", name, fmt.Sprintf(format, args...))
+	_, _ = fmt.Fprintf(l.w, "[nzinga][%s] %s\n", name, fmt.Sprintf(format, args...))
 }

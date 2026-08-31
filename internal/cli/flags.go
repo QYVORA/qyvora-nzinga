@@ -35,10 +35,6 @@ type targetOptions struct {
 	sim     bool
 }
 
-func (o targetOptions) empty() bool {
-	return o.value == "" && o.typ == "" && !o.sim
-}
-
 func (o targetOptions) targetType() models.TargetType {
 	if o.typ == "" {
 		return models.TargetDomain
@@ -64,13 +60,5 @@ func flagBool(cmd *cobra.Command, name string) bool {
 		return false
 	}
 	v, _ := cmd.Flags().GetBool(name)
-	return v
-}
-
-func flagInt(cmd *cobra.Command, name string) int {
-	if cmd == nil || cmd.Flags() == nil {
-		return 0
-	}
-	v, _ := cmd.Flags().GetInt(name)
 	return v
 }

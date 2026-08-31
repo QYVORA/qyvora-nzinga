@@ -130,7 +130,7 @@ func (w *Whois) query(ctx context.Context, server, query string) (map[string]str
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	if deadline, ok := ctx.Deadline(); ok {
 		_ = conn.SetDeadline(deadline)
