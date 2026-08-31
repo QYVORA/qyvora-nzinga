@@ -19,18 +19,20 @@ func nzingaUpdateConfig() selfupdate.Config {
 		Repo:           "qyvora-nzinga",
 		ToolName:       "nzinga",
 		CurrentVersion: version.String,
+		// Release binaries use anansi-style names: macos (not darwin) and a
+		// .exe suffix for windows.
 		ArtifactName: func(goos, goarch string) string {
-			return "nzinga_" + goos + "_" + goarch + tarExt(goos)
+			name := fmt.Sprintf("nzinga-%s-%s", goos, goarch)
+			if goos == "darwin" {
+				name = fmt.Sprintf("nzinga-macos-%s", goarch)
+			}
+			if goos == "windows" {
+				name += ".exe"
+			}
+			return name
 		},
-		ChecksumAsset: func(string) string { return "SHA256SUMS" },
+		ChecksumAsset: func(string) string { return "checksums.txt" },
 	}
-}
-
-func tarExt(goos string) string {
-	if goos == "windows" {
-		return ".zip"
-	}
-	return ".tar.gz"
 }
 
 func newUpdatesCmd() *cobra.Command {

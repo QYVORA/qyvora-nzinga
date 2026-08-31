@@ -53,9 +53,29 @@ The binary is written to `bin/nzinga`.
 
 ## Install
 
+Zero-config installer — detects your OS, CPU and shell, downloads the
+matching prebuilt binary from GitHub Releases (verified against
+`checksums.txt`), and falls back to building from source:
+
 ```
-./install.sh            # per-user install under ~/.local
-./install.sh --system   # system-wide install under /usr/local
+curl -fsSL https://raw.githubusercontent.com/QYVORA/qyvora-nzinga/main/install.sh | bash
+```
+
+On Windows, use the PowerShell installer — it downloads the checksum-verified
+binary under `%LOCALAPPDATA%\Programs\nzinga\bin`, adds it to your PATH, and
+installs the nzinga icon with a Start Menu shortcut:
+
+```
+irm https://raw.githubusercontent.com/QYVORA/qyvora-nzinga/main/install.ps1 | iex
+```
+
+On Linux, `install.sh` also installs the nzinga app icon and a desktop entry so
+the tool appears with its logo in the app menu — not just a bare binary.
+
+Or install from a checkout without network access:
+
+```
+./install.sh
 ```
 
 ## Quick start

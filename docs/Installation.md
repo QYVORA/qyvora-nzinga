@@ -35,12 +35,37 @@ make install DESTDIR=/tmp/stage
 
 ## Install script
 
-`./install.sh` detects the platform, builds (or downloads the matching
-release binary when published), and installs to `~/.local` or `/usr/local`:
+`./install.sh` is a zero-config installer. It detects your operating system,
+CPU architecture, and shell, downloads the matching prebuilt binary from
+GitHub Releases (verifying its SHA-256 against the published `checksums.txt`),
+and falls back to building from source when no release is available yet. By
+default it installs under `~/.local` and adds the directory to your `PATH`
+(sudo is only used when installing system-wide):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/QYVORA/qyvora-nzinga/main/install.sh | bash
+```
+
+Or from a checkout:
 
 ```sh
 ./install.sh
 ```
+
+On Linux the installer also installs the nzinga app icon and a `.desktop`
+entry (NVIDIA-style brand icon in your app menu), so nzinga appears with its
+logo — not as a bare command.
+
+### Windows
+
+```powershell
+irm https://raw.githubusercontent.com/QYVORA/qyvora-nzinga/main/install.ps1 | iex
+```
+
+Installs the checksum-verified binary under `%LOCALAPPDATA%\Programs\nzinga\bin`,
+adds it to your user PATH, installs the nzinga icon, and creates a Start Menu
+shortcut. Pin `$env:NZINGA_VERSION` or `$env:NZINGA_PREFIX` to control the
+version or install location.
 
 Uninstall: remove the four files listed above plus `~/.config/qyvora/nzinga/`
 and `~/.local/share/qyvora/nzinga/` if you no longer need your target state,
