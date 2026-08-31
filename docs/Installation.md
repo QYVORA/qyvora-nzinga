@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Go 1.22+ (release builds)
+- Go 1.26+ (the version pinned by `go.mod`)
 - No runtime dependencies: nzinga is a single self-contained binary.
 
 ## Build from source
