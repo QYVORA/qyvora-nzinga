@@ -25,6 +25,7 @@ func testEnv(t *testing.T, typ models.TargetType, value string) (*core.Env, *byt
 		sources.NewDNS(),
 		sources.NewWhois(43),
 		sources.NewGitHub(nil, ""),
+		sources.NewAbuseIPDB(nil, ""),
 		sources.NewSimulation(),
 	)
 	return &core.Env{

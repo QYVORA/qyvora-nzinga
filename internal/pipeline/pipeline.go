@@ -222,7 +222,7 @@ func collect(ctx context.Context, env *core.Env) error {
 	case models.TargetOrganization:
 		observations, errs = env.Registry.RunMode(ctx, env.Config, t, []string{"github", "simulation"}, env.Offline)
 	case models.TargetIP:
-		observations, errs = env.Registry.RunMode(ctx, env.Config, t, []string{"simulation"}, env.Offline)
+		observations, errs = env.Registry.RunMode(ctx, env.Config, t, []string{"abuseipdb", "simulation"}, env.Offline)
 	default:
 		return fmt.Errorf("collect: unsupported target type %q", t.Type)
 	}

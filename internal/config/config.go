@@ -87,6 +87,8 @@ func Load(cfgFile string) (*viper.Viper, error) {
 	v.SetDefault("sources.whois.port", 43)
 	v.SetDefault("sources.github.enabled", true)
 	v.SetDefault("sources.github.token", "")
+	v.SetDefault("sources.abuseipdb.enabled", true)
+	v.SetDefault("sources.abuseipdb.token", "")
 	v.SetDefault("sources.simulation.enabled", true)
 
 	if err := v.ReadInConfig(); err != nil {

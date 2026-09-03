@@ -211,6 +211,7 @@ func allSources() []sources.Source {
 		sources.NewDNS(),
 		sources.NewWhois(whoisPort),
 		sources.NewGitHub(shared, app.cfg.GetString("sources.github.token")),
+		sources.NewAbuseIPDB(shared, app.cfg.GetString("sources.abuseipdb.token")),
 		sources.NewSimulation(),
 	}
 }

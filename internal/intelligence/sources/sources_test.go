@@ -16,6 +16,7 @@ func TestEnabledResolvesDotIDsToUnderscoreKeys(t *testing.T) {
 		NewDNS(),
 		NewWhois(43),
 		NewGitHub(nil, ""),
+		NewAbuseIPDB(nil, ""),
 		NewSimulation(),
 	)
 	enabled := reg.Enabled(cfg)
@@ -26,7 +27,7 @@ func TestEnabledResolvesDotIDsToUnderscoreKeys(t *testing.T) {
 	if !ids["crt.sh"] {
 		t.Fatalf("crt.sh must be enabled by default (config key sources.crt_sh.enabled): got %v", ids)
 	}
-	for _, id := range []string{"dns", "whois", "github", "simulation"} {
+	for _, id := range []string{"dns", "whois", "github", "abuseipdb", "simulation"} {
 		if !ids[id] {
 			t.Fatalf("source %q expected enabled by default, got %v", id, ids)
 		}
@@ -52,6 +53,7 @@ func TestRegistryListOrderIsDeterministic(t *testing.T) {
 		NewCrtSh(nil),
 		NewDNS(),
 		NewWhois(43),
+		NewAbuseIPDB(nil, ""),
 	)
 	meta := reg.List()
 	prev := ""
