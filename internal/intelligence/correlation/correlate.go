@@ -126,6 +126,14 @@ func sharedHostingDomains(ctx *rules.Context) []sharedHost {
 			domByID[d.ID] = d.Name
 		}
 	}
+	// Resolve an IP entity ID to its address so claim subjects reference the
+	// address, never the entity id (mirrors the OSINT-002 precedent).
+	ipAddr := map[string]string{}
+	for _, ip := range ctx.IPs {
+		if ip != nil {
+			ipAddr[ip.ID] = ip.Address
+		}
+	}
 	hnDomain := map[string]string{}
 	for _, e := range ctx.Edges {
 		if e != nil && e.Type == models.RelOwes {
@@ -147,10 +155,14 @@ func sharedHostingDomains(ctx *rules.Context) []sharedHost {
 		if !ok {
 			continue
 		}
-		if ipDoms[e.To] == nil {
-			ipDoms[e.To] = map[string]bool{}
+		addr, ok := ipAddr[e.To]
+		if !ok {
+			addr = e.To
 		}
-		ipDoms[e.To][dom] = true
+		if ipDoms[addr] == nil {
+			ipDoms[addr] = map[string]bool{}
+		}
+		ipDoms[addr][dom] = true
 	}
 	var out []sharedHost
 	for ip, doms := range ipDoms {
