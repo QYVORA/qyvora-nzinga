@@ -40,6 +40,7 @@ type Context struct {
 	Organizations []*models.Organization
 	Observations  []*models.Observation
 	Edges         []*models.Edge
+	Claims        []*models.Claim
 }
 
 // NewContext builds an evaluation context from a session.
@@ -56,6 +57,7 @@ func NewContext(sess *models.Session) *Context {
 	c.Organizations = append([]*models.Organization(nil), sess.Organizations...)
 	c.Observations = append([]*models.Observation(nil), sess.Observations...)
 	c.Edges = append([]*models.Edge(nil), sess.Edges...)
+	c.Claims = append([]*models.Claim(nil), sess.Claims...)
 	return c
 }
 

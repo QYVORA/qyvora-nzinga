@@ -16,6 +16,7 @@ func All() []*rules.Rule {
 		infrastructureOverlap(),
 		exposedPIIEmail(),
 		dnsWildcard(),
+		claimDriven(),
 	}
 }
 
@@ -249,8 +250,94 @@ func dnsWildcard() *rules.Rule {
 	}
 }
 
-// --- helpers ---------------------------------------------------------------
+// claimDriven surfaces each correlation claim as a finding so the intelligence
+// layer (correlation) becomes an input to findings and, through them, the risk
+// engine. A claim is the framework's explicit, evidence-backed assertion, so
+// converting it to a finding preserves the claim's confidence and provenance.
+// Claim type maps to a finding category/severity; evidence comes from the
+// observations the claim references.
+func claimDriven() *rules.Rule {
+	category := func(t models.ClaimType) (string, models.Severity) {
+		switch t {
+		case models.ClaimExposure:
+			return "pii-exposure", models.SeverityMedium
+		case models.ClaimInfrastructure:
+			return "infrastructure-overlap", models.SeverityLow
+		case models.ClaimAttribution, models.ClaimIdentity, models.ClaimConsistency:
+			return "identity-consistency", models.SeverityInformational
+		default:
+			return "correlation", models.SeverityInformational
+		}
+	}
+	return &rules.Rule{
+		ID:          "OSINT-005",
+		Name:        "Correlation claim surfaced as risk input",
+		Category:    "correlation",
+		Description: "Promotes framework correlation claims into evidence-backed findings so intelligence assertions feed the risk engine instead of being write-only.",
+		Severity:    models.SeverityLow,
+		Confidence:  models.ConfidenceProbable,
+		Remediation: "Treat each surfaced claim as an assertion to verify; the listed observations are its traceable evidence.",
+		ObjectTypes: []string{"username", "email", "ip", "domain"},
+		Detect: func(ctx *rules.Context) []*models.Finding {
+			if ctx == nil || len(ctx.Claims) == 0 {
+				return nil
+			}
+			var findings []*models.Finding
+			for _, c := range ctx.Claims {
+				if c == nil {
+					continue
+				}
+				obs := observationsForClaim(ctx, c)
+				cat, sev := category(c.Type)
+				var attrib map[string]string
+				if len(c.Attributes) > 0 {
+					attrib = make(map[string]string, len(c.Attributes)+1)
+					for k, v := range c.Attributes {
+						attrib[k] = v
+					}
+				} else {
+					attrib = map[string]string{}
+				}
+				attrib["claim_type"] = string(c.Type)
+				attrib["confidence"] = string(c.Confidence)
+				if len(obs) > 0 {
+					attrib["sources"] = sourceList(obs)
+				}
+				findings = append(findings, &models.Finding{
+					Title:       "Correlation claim: " + c.Assertion,
+					Category:    cat,
+					Description: c.Assertion,
+					Severity:    sev,
+					Confidence:  c.Confidence,
+					Status:      models.StatusDetected,
+					State:       c.State,
+					Objects:     []string{c.Subject},
+					Evidence:    evidenceFrom(obs),
+					Attributes:  attrib,
+				})
+			}
+			return findings
+		},
+	}
+}
 
+func observationsForClaim(ctx *rules.Context, c *models.Claim) []*models.Observation {
+	byID := map[string]bool{}
+	for _, id := range c.ObservationIDs {
+		if id != "" {
+			byID[id] = true
+		}
+	}
+	var out []*models.Observation
+	for _, o := range ctx.Observations {
+		if o != nil && byID[o.ID] {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+// --- helpers ---------------------------------------------------------------
 func observationsFor(ctx *rules.Context, key, value string) []*models.Observation {
 	var out []*models.Observation
 	for _, o := range ctx.Observations {

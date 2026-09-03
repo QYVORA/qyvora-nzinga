@@ -189,3 +189,52 @@ func TestEvidenceForObservationPreservesProvenance(t *testing.T) {
 		t.Fatalf("evidence lost provenance: %+v", ev)
 	}
 }
+
+func TestClaimDrivenSurfacesClaimsAsFindings(t *testing.T) {
+	sess := helperSession()
+	sess.Observations = []*models.Observation{
+		{ID: "obs-1", Source: "simulation", Key: "email", Target: "example.com", Value: "abuse@example.com"},
+		{ID: "obs-2", Source: "whois", Key: "email", Target: "example.com", Value: "abuse@example.com"},
+	}
+	sess.Claims = []*models.Claim{
+		{
+			ID: "clm-1", Type: models.ClaimExposure, Subject: "abuse@example.com",
+			Assertion:  "email abuse@example.com is recoverable from public sources",
+			Confidence: models.ConfidenceObserved, State: models.StateObserved,
+			ObservationIDs: []string{"obs-1", "obs-2"},
+		},
+	}
+	findings := engine().Eval(rules.NewContext(sess), "tgt-1", "sess-1")
+	var surfaced *models.Finding
+	for _, f := range findings {
+		if f.RuleID == "OSINT-005" {
+			surfaced = f
+		}
+	}
+	if surfaced == nil {
+		t.Fatal("OSINT-005 should surface a claim as a finding")
+	}
+	if surfaced.Category != "pii-exposure" {
+		t.Fatalf("exposure claim category=%q want pii-exposure", surfaced.Category)
+	}
+	if surfaced.Confidence != models.ConfidenceObserved {
+		t.Fatalf("confidence=%s want the claim's observed", surfaced.Confidence)
+	}
+	if len(surfaced.Evidence) != 2 {
+		t.Fatalf("evidence=%d want 2 (one per referenced observation)", len(surfaced.Evidence))
+	}
+	if surfaced.Attributes["claim_type"] != "exposure" {
+		t.Fatalf("claim_type attribute missing: %+v", surfaced.Attributes)
+	}
+}
+
+func TestClaimDrivenFiresNothingWithoutClaims(t *testing.T) {
+	sess := helperSession()
+	sess.Observations = []*models.Observation{
+		{ID: "obs-1", Source: "simulation", Key: "email", Target: "example.com", Value: "abuse@example.com"},
+	}
+	findings := engine().Eval(rules.NewContext(sess), "tgt-1", "sess-1")
+	if hasRule(findings, "OSINT-005") {
+		t.Fatal("OSINT-005 must not fire when the session has no claims")
+	}
+}
