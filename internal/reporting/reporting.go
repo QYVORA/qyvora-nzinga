@@ -109,6 +109,15 @@ func renderTerminal(s *models.Session) string {
 	writef(&b, "  observations %d, claims %d", len(s.Observations), len(s.Claims))
 	writef(&b, "  graph nodes %d, edges %d", len(s.Nodes), len(s.Edges))
 
+	if len(s.Claims) > 0 {
+		writef(&b, "")
+		writef(&b, "claims (%d)", len(s.Claims))
+		for _, c := range s.Claims {
+			writef(&b, "  [%s] %s", c.Type, c.Assertion)
+			writef(&b, "      subject=%s confidence=%s observations=%d", orDash(c.Subject), c.Confidence, len(c.ObservationIDs))
+		}
+	}
+
 	if len(s.Findings) > 0 {
 		writef(&b, "")
 		writef(&b, "findings (%d)", len(s.Findings))
@@ -159,6 +168,14 @@ func renderMarkdown(s *models.Session) string {
 
 	writeMarkdownList(&b, "Usernames", toStrings(s.Usernames))
 	writeMarkdownList(&b, "Emails", toStrings(s.Emails))
+
+	if len(s.Claims) > 0 {
+		fmt.Fprintf(&b, "\n## Correlation claims (%d)\n\n", len(s.Claims))
+		b.WriteString("| type | subject | assertion | confidence | observations |\n| --- | --- | --- | --- | --- |\n")
+		for _, c := range s.Claims {
+			fmt.Fprintf(&b, "| %s | %s | %s | %s | %d |\n", c.Type, orDash(c.Subject), c.Assertion, c.Confidence, len(c.ObservationIDs))
+		}
+	}
 
 	if len(s.Findings) > 0 {
 		fmt.Fprintf(&b, "\n## Findings (%d)\n\n", len(s.Findings))
