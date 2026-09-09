@@ -7,7 +7,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- **Machine-output purity** — informational messages move to stderr when a
+  machine-readable format is active.
+- **ANSI hygiene** — terminal colors are disabled when stdout is piped or
+  redirected or `NO_COLOR` is set; the console `clear` command only emits
+  control sequences to an interactive terminal.
+- Fatal config/event errors no longer call `os.Exit(1)` directly; they surface
+  through `Execute`'s exit-code contract.
+
 ### Added
+
 
 - Initial scaffold: module `github.com/QYVORA/qyvora-nzinga`, `go 1.26.5`.
 - Exit-code contract (0 success / 1 runtime / 2 usage / 130 interrupted).

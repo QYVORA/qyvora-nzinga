@@ -181,7 +181,9 @@ func (c *nzingaConsole) exec(line string) (bool, error) {
 		c.help()
 		return false, nil
 	case "clear", "cls":
-		_, _ = fmt.Fprint(c.out, "\x1b[H\x1b[2J")
+		if writerIsTerminal(c.out) {
+			_, _ = fmt.Fprint(c.out, "\x1b[H\x1b[2J")
+		}
 		return false, nil
 	case "banner", "logo":
 		c.ui.Banner("OSINT & intelligence collection framework")

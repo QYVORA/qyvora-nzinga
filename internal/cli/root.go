@@ -141,12 +141,13 @@ func init() {
 }
 
 // initConfig loads configuration and initializes the shared logger, printer,
-// target manager, session store and source registry.
+// target manager, session store and source registry. Failures are recorded as
+// init errors so ExecuteArgs can report them without calling os.Exit.
 func initConfig() {
 	v, err := config.Load(app.cfgFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error loading config: %v\n", err)
-		os.Exit(1)
+		app.initErr = errs.WrapExitError(2, "loading config", err)
+		return
 	}
 	app.cfg = v
 	initLogger()
@@ -156,8 +157,8 @@ func initConfig() {
 	app.reg = sources.NewRegistry(allSources()...)
 	if app.eventsF != "" {
 		if err := app.resolveEvents(rootCmd.Context()); err != nil {
-			fmt.Fprintf(os.Stderr, "error configuring events: %v\n", err)
-			os.Exit(1)
+			app.initErr = errs.WrapExitError(2, "configuring events", err)
+			return
 		}
 	}
 }
@@ -194,6 +195,20 @@ func initPrinter() {
 		return
 	}
 	app.printer.SetFormat(parsed)
+	// ANSI color is a terminal-only nicety: disable it when stdout is not an
+	// interactive device or when the caller opts out via NO_COLOR, so no
+	// escape sequences leak into redirected or piped output.
+	color.NoColor = !stdoutIsTerminal() || os.Getenv("NO_COLOR") != ""
+}
+
+// stdoutIsTerminal reports whether standard output is an interactive
+// character device.
+func stdoutIsTerminal() bool {
+	fi, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+	return fi.Mode()&os.ModeCharDevice != 0
 }
 
 // allSources returns the built-in collectors in registry order.
