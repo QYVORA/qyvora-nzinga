@@ -1,6 +1,8 @@
 # nzinga CLI Reference
 
-Run `nzinga` with no arguments to enter the interactive console (REPL).
+Run `nzinga` with no arguments to enter the console (REPL). On a real
+terminal you get a readline console; when stdin is piped or redirected it
+degrades to a plain line reader with no banner or escape sequences.
 
 ## Exit codes
 
@@ -117,8 +119,10 @@ info.
 
 ## Console (REPL)
 
-`nzinga` with no subcommand starts a readline console. Console collection
-runs default to the offline simulation dataset.
+`nzinga` with no subcommand starts a readline console when stdin is a real
+terminal; piped/redirected input runs the same commands as a plain line
+reader (no banner, no colors, no completion/history persistence). Console
+collection runs default to the offline simulation dataset.
 
 | Command | Meaning |
 |---------|---------|

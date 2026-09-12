@@ -9,6 +9,16 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+- **Unified version system** — `internal/version` identity now also carries
+  official QYVORA contact details (website, support, location), surfaced by
+  `nzinga version` in terminal and machine formats.
+- **Contact details** — the `version` command, README, and `SECURITY.md`
+  surface official QYVORA contact: https://qyvora.netlify.app ·
+  qyvorasec@gmail.com · Tamale, Ghana.
+- **Owner-domain accuracy** — `apexDomainOf` now honors a curated two-label
+  public-suffix table (`example.co.uk`, `blog.example.com.au`, …) so inferred
+  owner domains are registrable domains instead of TLD fragments, and returns
+  empty for IP literals so no invalid owner is claimed.
 - **Machine-output purity** — informational messages move to stderr when a
   machine-readable format is active.
 - **ANSI hygiene** — terminal colors are disabled when stdout is piped or

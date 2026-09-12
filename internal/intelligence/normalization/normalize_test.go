@@ -177,14 +177,26 @@ func TestIsHostnameLike(t *testing.T) {
 }
 
 func TestApexDomainOf(t *testing.T) {
-	if got := apexDomainOf("www.example.co.uk"); got != "" {
-		_ = got // behaviour for multi-part TLDs is a documented heuristic; assert the simple case:
+	if got := apexDomainOf("www.example.co.uk"); got != "example.co.uk" {
+		t.Fatalf("apexDomainOf(www.example.co.uk) = %q, want example.co.uk", got)
+	}
+	if got := apexDomainOf("example.co.uk"); got != "example.co.uk" {
+		t.Fatalf("apexDomainOf(example.co.uk) = %q, want example.co.uk", got)
 	}
 	if got := apexDomainOf("www.example.com"); got != "example.com" {
 		t.Fatalf("apexDomainOf(www.example.com) = %q, want example.com", got)
 	}
 	if got := apexDomainOf("Mail.Example.NET"); got != "example.net" {
 		t.Fatalf("apexDomainOf should be case-insensitive, got %q", got)
+	}
+	if got := apexDomainOf("blog.example.com.au"); got != "example.com.au" {
+		t.Fatalf("apexDomainOf(blog.example.com.au) = %q, want example.com.au", got)
+	}
+	if got := apexDomainOf("203.0.113.10"); got != "" {
+		t.Fatalf("apexDomainOf(IP) = %q, want empty (IPs have no owner domain)", got)
+	}
+	if got := apexDomainOf("localhost"); got != "" {
+		t.Fatalf("apexDomainOf(localhost) = %q, want empty", got)
 	}
 }
 

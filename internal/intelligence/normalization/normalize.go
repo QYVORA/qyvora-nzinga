@@ -656,25 +656,83 @@ func isHostnameLike(s string) bool {
 	return strings.Contains(s, ".") && !strings.Contains(s, "@")
 }
 
-// apexDomainOf extracts the registrable-ish owner domain from a hostname.
-// The heuristic takes the last two labels for common two-part TLDs and the
-// last two otherwise; it is honest (the result is an inferred domain) and is
-// enough for demo granularity.
+// twoLabelSuffixes are common two-label public suffixes above which exactly
+// one registrable label sits (example.co.uk owns "example.co.uk", not
+// "co.uk"). Curated to cover the suffixes most likely to appear in OSINT
+// sources without needing a full publicsuffix.org list.
+var twoLabelSuffixes = map[string]bool{
+	"co.uk": true, "org.uk": true, "ac.uk": true, "gov.uk": true, "me.uk": true, "ltd.uk": true, "plc.uk": true, "net.uk": true, "sch.uk": true,
+	"com.au": true, "net.au": true, "org.au": true, "edu.au": true, "gov.au": true, "id.au": true,
+	"co.jp": true, "ne.jp": true, "or.jp": true, "ac.jp": true, "go.jp": true, "ad.jp": true, "ed.jp": true,
+	"co.nz": true, "net.nz": true, "org.nz": true, "ac.nz": true, "govt.nz": true, "geek.nz": true,
+	"co.in": true, "net.in": true, "org.in": true, "ac.in": true, "gov.in": true, "gen.in": true, "firm.in": true, "ind.in": true, "nic.in": true,
+	"com.br": true, "net.br": true, "org.br": true, "gov.br": true, "edu.br": true, "art.br": true, "esp.br": true, "ind.br": true,
+	"co.za": true, "org.za": true, "net.za": true, "gov.za": true, "ac.za": true,
+	"com.cn": true, "net.cn": true, "org.cn": true, "gov.cn": true, "edu.cn": true, "ac.cn": true,
+	"com.my": true, "net.my": true, "org.my": true, "gov.my": true, "edu.my": true,
+	"com.sg": true, "net.sg": true, "org.sg": true, "gov.sg": true, "edu.sg": true,
+	"com.hk": true, "net.hk": true, "org.hk": true, "gov.hk": true, "edu.hk": true,
+	"com.tw": true, "net.tw": true, "org.tw": true, "gov.tw": true, "edu.tw": true,
+	"com.tr": true, "net.tr": true, "org.tr": true, "gov.tr": true, "edu.tr": true, "gen.tr": true, "web.tr": true,
+	"com.mx": true, "net.mx": true, "org.mx": true, "gob.mx": true, "edu.mx": true,
+	"com.ar": true, "net.ar": true, "org.ar": true, "gob.ar": true, "edu.ar": true,
+	"com.ua": true, "net.ua": true, "org.ua": true, "gov.ua": true, "edu.ua": true, "in.ua": true,
+	"com.ru": true, "net.ru": true, "org.ru": true, "gov.ru": true, "edu.ru": true, "msk.ru": true, "spb.ru": true,
+	"com.pl": true, "net.pl": true, "org.pl": true, "gov.pl": true, "edu.pl": true, "waw.pl": true,
+	"co.kr": true, "or.kr": true, "go.kr": true, "ac.kr": true, "ne.kr": true, "re.kr": true,
+	"co.id": true, "or.id": true, "go.id": true, "ac.id": true, "web.id": true, "sch.id": true,
+	"co.il": true, "org.il": true, "gov.il": true, "ac.il": true, "net.il": true,
+	"com.pk": true, "net.pk": true, "org.pk": true, "gov.pk": true, "edu.pk": true,
+	"co.ke": true, "or.ke": true, "go.ke": true, "ac.ke": true, "ne.ke": true,
+	"com.eg": true, "net.eg": true, "org.eg": true, "gov.eg": true, "edu.eg": true,
+	"com.sa": true, "net.sa": true, "org.sa": true, "gov.sa": true, "edu.sa": true,
+	"co.th": true, "or.th": true, "ac.th": true, "go.th": true, "in.th": true,
+	"com.vn": true, "net.vn": true, "org.vn": true, "gov.vn": true, "edu.vn": true,
+	"com.ph": true, "net.ph": true, "org.ph": true, "gov.ph": true, "edu.ph": true,
+	"com.gr": true, "net.gr": true, "org.gr": true, "gov.gr": true, "edu.gr": true,
+	"com.pt": true, "net.pt": true, "org.pt": true, "gov.pt": true, "edu.pt": true,
+	"com.es": true, "net.es": true, "org.es": true, "gob.es": true, "edu.es": true,
+	"com.it": true, "net.it": true, "org.it": true, "gov.it": true, "edu.it": true,
+	"com.fr": true, "net.fr": true, "org.fr": true, "gouv.fr": true,
+	"com.de": true, "net.de": true, "org.de": true,
+	"com.nl": true, "net.nl": true, "org.nl": true,
+	"com.be": true, "net.be": true, "org.be": true, "ac.be": true,
+	"co.at": true, "or.at": true, "ac.at": true, "gv.at": true,
+	"co.ca": true, "gc.ca": true,
+}
+
+// apexDomainOf extracts the registrable owner domain from a hostname: the
+// registrable label sat on top of its public suffix. A curated two-label
+// public-suffix table keeps multi-part TLDs correct ("www.example.co.uk" →
+// "example.co.uk"), and pure-numeric labels (which are IP addresses, not
+// hostnames) yield "" so no invalid owner domain is claimed.
 func apexDomainOf(host string) string {
 	host = strings.TrimSuffix(strings.TrimSpace(strings.ToLower(host)), ".")
 	labels := strings.Split(host, ".")
 	if len(labels) < 2 {
 		return ""
 	}
+	numericOnly := true
+	for _, l := range labels {
+		for _, c := range l {
+			if c < '0' || c > '9' {
+				numericOnly = false
+				break
+			}
+		}
+		if !numericOnly {
+			break
+		}
+	}
+	if numericOnly {
+		return ""
+	}
 	if len(labels) == 2 {
 		return host
 	}
-	tld := labels[len(labels)-1]
-	if tld == "com" || tld == "net" || tld == "org" || tld == "io" ||
-		tld == "co" || tld == "gov" || tld == "edu" || len(tld) == 2 {
-		if len(labels) >= 3 {
-			return strings.Join(labels[len(labels)-2:], ".")
-		}
+	lastTwo := strings.Join(labels[len(labels)-2:], ".")
+	if twoLabelSuffixes[lastTwo] {
+		return strings.Join(labels[len(labels)-3:], ".")
 	}
-	return strings.Join(labels[len(labels)-2:], ".")
+	return lastTwo
 }

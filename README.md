@@ -38,7 +38,7 @@ and no authorization requirement.
 
 - Authorize a run: `nzinga assess -y domain:example.com`
 - Explore offline: `nzinga assess --sim`
-- Start the interactive console: `nzinga`
+- Start the console (REPL on a real terminal, plain line reader when piped): `nzinga`
 
 ## Build
 
@@ -135,6 +135,11 @@ correlation -> rules -> risk -> reporting. See `docs/Architecture.md`,
 
 See `CONTRIBUTING.md`. Tests cover collection (offline), normalization,
 correlation, rules determinism, risk, rendering, and the authorization gate.
+
+## Contact
+
+QYVORA OffSec — Tamale, Ghana
+Website: https://qyvora.netlify.app · Security/Support: qyvorasec@gmail.com
 
 ## License
 
