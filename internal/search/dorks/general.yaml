@@ -1,0 +1,35 @@
+- id: general.indexed
+  category: general
+  name: Indexed pages
+  description: Pages of the target registered in the search index.
+  query: site:{target}
+- id: general.indexed_wildcard
+  category: general
+  name: Indexed pages (any subdomain)
+  description: Indexed pages across every subdomain of the target.
+  query: site:*.{target}
+- id: general.login
+  category: general
+  name: Login surfaces
+  description: Login and signin pages indexed for the target.
+  query: site:{target} inurl:login
+- id: general.admin
+  category: general
+  name: Admin surfaces
+  description: Administration and control-panel pages indexed for the target.
+  query: site:{target} inurl:admin
+- id: general.dashboard
+  category: general
+  name: Dashboards
+  description: Dashboard and panel pages indexed for the target.
+  query: site:{target} inurl:dashboard
+- id: general.config
+  category: general
+  name: Configuration endpoints
+  description: Configuration-related URLs indexed for the target.
+  query: site:{target} inurl:config
+- id: general.online_service
+  category: general
+  name: Online services portal
+  description: Service portals indexed for the target.
+  query: site:{target} inurl:portal

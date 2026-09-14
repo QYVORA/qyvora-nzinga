@@ -30,7 +30,10 @@ type Collector struct {
 
 // Collect executes the pipeline of sources and returns the combined
 // observations. In offline mode the simulation dataset is used and the DNS
-// pass is skipped (the dataset already carries its resolution results).
+// pass is skipped (the dataset already carries its resolution results). The
+// optional config flag collect.search_only restricts collection to the search
+// source (used by the dedicated `dork` command); it is never set by a default
+// assessment.
 func (c *Collector) Collect(ctx context.Context, t *models.Target, offline bool) ([]*models.Observation, []error) {
 	if t == nil {
 		return nil, []error{fmt.Errorf("target is nil")}
@@ -38,6 +41,12 @@ func (c *Collector) Collect(ctx context.Context, t *models.Target, offline bool)
 
 	var observations []*models.Observation
 	var errs []error
+
+	onlySearch := c.Config != nil && c.Config.GetBool("collect.search_only")
+	if onlySearch {
+		obs, runErrs := c.Registry.RunMode(ctx, c.Config, t, []string{"search"}, offline)
+		return obs, runErrs
+	}
 
 	if offline {
 		obs, runErrs := c.Registry.RunMode(ctx, c.Config, t, nil, true)
@@ -74,6 +83,16 @@ func (c *Collector) Collect(ctx context.Context, t *models.Target, offline bool)
 	obs, runErrs = c.Registry.Run(ctx, c.Config, t, []string{"whois"})
 	observations = append(observations, obs...)
 	errs = append(errs, runErrs...)
+
+	// Stage 4: search-engine dorking (strictly opt-in via
+	// sources.search.enabled). It runs last so any hostnames it surfaces never
+	// feed the DNS resolution pass above: they are unverified index snippets,
+	// not confirmed subdomains.
+	if c.Config.GetBool("sources.search.enabled") {
+		obs, runErrs = c.Registry.Run(ctx, c.Config, t, []string{"search"})
+		observations = append(observations, obs...)
+		errs = append(errs, runErrs...)
+	}
 
 	return observations, errs
 }

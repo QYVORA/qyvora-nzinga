@@ -17,6 +17,7 @@ import (
 	"github.com/QYVORA/qyvora-nzinga/internal/intelligence/sources"
 	"github.com/QYVORA/qyvora-nzinga/internal/logger"
 	"github.com/QYVORA/qyvora-nzinga/internal/output"
+	"github.com/QYVORA/qyvora-nzinga/internal/search"
 	"github.com/QYVORA/qyvora-nzinga/internal/session"
 	"github.com/QYVORA/qyvora-nzinga/internal/target"
 	"github.com/QYVORA/qyvora-nzinga/pkg/models"
@@ -30,6 +31,7 @@ type appState struct {
 	targets *target.Manager
 	store   *session.Store
 	reg     *sources.Registry
+	dorks   *search.DorkSet
 
 	eventStream *events.Stream
 	eventSink   io.Writer

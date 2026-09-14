@@ -1,0 +1,30 @@
+- id: documents.pdf
+  category: documents
+  name: PDF documents
+  description: PDF documents hosted on the target.
+  query: site:{target} filetype:pdf
+- id: documents.office
+  category: documents
+  name: Office documents
+  description: Microsoft Office documents hosted on the target.
+  query: site:{target} filetype:doc OR filetype:docx OR filetype:xls OR filetype:xlsx OR filetype:ppt OR filetype:pptx
+- id: documents.spreadsheets
+  category: documents
+  name: Spreadsheets
+  description: Spreadsheet files hosted on the target.
+  query: site:{target} filetype:xls OR filetype:xlsx OR filetype:csv
+- id: documents.presentations
+  category: documents
+  name: Presentations
+  description: Presentation files hosted on the target.
+  query: site:{target} filetype:ppt OR filetype:pptx OR filetype:odp
+- id: documents.text
+  category: documents
+  name: Plain-text files
+  description: Plain-text files hosted on the target.
+  query: site:{target} filetype:txt
+- id: documents.confidential
+  category: documents
+  name: Confidential-tagged documents
+  description: Documents whose title or content carries a confidentiality marker.
+  query: site:{target} intitle:confidential

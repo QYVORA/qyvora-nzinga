@@ -1,0 +1,25 @@
+- id: technology.wordpress
+  category: technology
+  name: WordPress surfaces
+  description: WordPress admin and content paths indexed for the target.
+  query: site:{target} inurl:wp-admin OR inurl:wp-content OR inurl:wp-login
+- id: technology.phpinfo
+  category: technology
+  name: PHP info pages
+  description: phpinfo output pages indexed for the target.
+  query: site:{target} inurl:phpinfo
+- id: technology.server_status
+  category: technology
+  name: Server-status endpoints
+  description: HTTP server status pages indexed for the target.
+  query: site:{target} "apache server status"
+- id: technology.panels
+  category: technology
+  name: Control panels
+  description: Common control-panel paths indexed for the target.
+  query: site:{target} inurl:cpanel OR inurl:webmin OR inurl:plesk
+- id: technology.wellknown
+  category: technology
+  name: Well-known routes
+  description: Security-related well-known endpoints indexed for the target.
+  query: site:{target} inurl:.well-known

@@ -29,8 +29,23 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-
-- Initial scaffold: module `github.com/QYVORA/qyvora-nzinga`, `go 1.26.5`.
+- **Search engine dorking** — new `internal/search` package with 30 built-in
+  dork templates across 5 YAML category files (general, documents, social,
+  technology, exposed-services). The CLI `dork` command and console
+  `dork`/`dorks` commands scan a configured search provider and render results
+  with source, snippet and `StateInferred` / `ConfidencePossible` status
+  (results are unverified).
+- **Search intelligence source** — collector stage `search` (opt-in,
+  `sources.search.enabled=false` by default) feeds surfaced search hits into
+  evidence with caps and categorized dork coverage. Config: `search.provider`,
+  `search.endpoint`, `search.token`, `search.method`, `search.query_param`,
+  `sources.search.max_queries` (default 25) and `sources.search.categories`.
+- **Anti-automation honesty** — when a provider responds with a CAPTCHA /
+  challenge or HTTP 429 rate limit, NZINGA reports
+  `anti-automation challenge detected and not bypassed` (or a rate-limit
+  notice) instead of fabricating results; no CAPTCHA or anti-bot defenses are
+  ever bypassed. A provider with no endpoint configured yields an explicit
+  configuration error unless `--sim` is used.
 - Exit-code contract (0 success / 1 runtime / 2 usage / 130 interrupted).
 - Build identity (`internal/version`) stamped by Makefile and release CI.
 - Brand banner (amber #FFB000 crown emblem) and 512px icon + desktop entry.

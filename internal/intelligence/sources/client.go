@@ -1,6 +1,7 @@
 package sources
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -95,12 +96,31 @@ func NewClient(opts ClientOptions) (*Client, error) {
 
 // Do performs a request and returns the response with the full body read.
 func (c *Client) Do(ctx context.Context, method, u string, headers http.Header) (*http.Response, []byte, error) {
+	return c.request(ctx, method, u, nil, headers)
+}
+
+// DoWithBody performs a request that carries a JSON payload and returns the
+// response with the full body read. It is the same hardened path as Do
+// (context, capping, SSRF-guarded redirects, retries for safe methods), and
+// sets Content-Type: application/json when a body is present.
+func (c *Client) DoWithBody(ctx context.Context, method, u string, body []byte, headers http.Header) (*http.Response, []byte, error) {
+	return c.request(ctx, method, u, body, headers)
+}
+
+func (c *Client) request(ctx context.Context, method, u string, body []byte, headers http.Header) (*http.Response, []byte, error) {
 	if c == nil || c.http == nil {
 		return nil, nil, errors.New("http client is nil")
 	}
-	req, err := http.NewRequestWithContext(ctx, method, u, nil)
+	var reader io.Reader
+	if body != nil {
+		reader = bytes.NewReader(body)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, u, reader)
 	if err != nil {
 		return nil, nil, err
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
 	}
 	if c.maxRetries > 0 && safeToRetry(method) {
 		return c.doRetry(ctx, req, headers)

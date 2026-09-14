@@ -11,6 +11,7 @@ const (
 	CategorySocial      SourceCategory = "social"
 	CategoryIdentity    SourceCategory = "identity"
 	CategoryNetwork     SourceCategory = "network"
+	CategorySearch      SourceCategory = "search"
 	CategorySimulation  SourceCategory = "simulation"
 )
 

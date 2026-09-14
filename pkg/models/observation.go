@@ -15,6 +15,7 @@ import "time"
 //	username.lookup       find a username across platforms
 //	repository.enumerate  enumerate public code repositories
 //	email.enumerate       discover email addresses from public sources
+//	search.dork           execute curated dork queries against a provider
 type Capability string
 
 const (
@@ -28,6 +29,9 @@ const (
 	CapUsernameLookup     Capability = "username.lookup"
 	CapRepoEnumerate      Capability = "repository.enumerate"
 	CapEmailEnumerate     Capability = "email.enumerate"
+	// CapSearchDork is the search-engine dorking capability. It is opt-in
+	// and never part of a default collection pass.
+	CapSearchDork Capability = "search.dork"
 	// CapAnalysis is the framework-internal correlation/analysis capability
 	// (not a collection source capability).
 	CapAnalysis Capability = "analysis"
@@ -46,6 +50,7 @@ var AllCapabilities = []Capability{
 	CapUsernameLookup,
 	CapRepoEnumerate,
 	CapEmailEnumerate,
+	CapSearchDork,
 }
 
 // ClaimType classifies the assertion a Claim makes about its subject.

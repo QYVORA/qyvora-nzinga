@@ -210,7 +210,19 @@ func (n *Normalizer) apply(o *models.Observation) {
 }
 
 func (n *Normalizer) handleHostname(o *models.Observation) {
-	h := n.upsertHostname(o.Value, "", o.Source, models.StateObserved, models.ConfidenceObserved)
+	// Honour the state/confidence the source declared: an unverified host
+	// surfaced by a search index must not become a confirmed subdomain just
+	// because it arrived with the "hostname" key. Sources without a declared
+	// verdict default to observed.
+	state := o.State
+	if state == "" {
+		state = models.StateObserved
+	}
+	conf := o.Confidence
+	if conf == "" {
+		conf = models.ConfidenceObserved
+	}
+	h := n.upsertHostname(o.Value, "", o.Source, state, conf)
 	// Attribute ownership to the observation's target domain only when the
 	// hostname actually falls under it. A SAN like mail.example.net seen while
 	// querying example.com belongs to example.net, not example.com, so it must

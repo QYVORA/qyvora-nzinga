@@ -91,6 +91,18 @@ func Load(cfgFile string) (*viper.Viper, error) {
 	v.SetDefault("sources.abuseipdb.token", "")
 	v.SetDefault("sources.simulation.enabled", true)
 
+	// Search-engine dorking is strictly opt-in: it is disabled by default
+	// and is never part of a default domain/infrastructure collection pass.
+	// Live collection additionally requires a configured search.provider.
+	v.SetDefault("sources.search.enabled", false)
+	v.SetDefault("sources.search.max_queries", 25)
+	v.SetDefault("sources.search.categories", "")
+	v.SetDefault("search.provider", "")
+	v.SetDefault("search.endpoint", "")
+	v.SetDefault("search.token", "")
+	v.SetDefault("search.method", "GET")
+	v.SetDefault("search.query_param", "query")
+
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("reading config: %w", err)

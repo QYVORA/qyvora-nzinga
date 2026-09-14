@@ -16,6 +16,7 @@ import (
 	"github.com/QYVORA/qyvora-nzinga/internal/intelligence/sources"
 	"github.com/QYVORA/qyvora-nzinga/internal/logger"
 	"github.com/QYVORA/qyvora-nzinga/internal/output"
+	"github.com/QYVORA/qyvora-nzinga/internal/search"
 	"github.com/QYVORA/qyvora-nzinga/internal/session"
 	"github.com/QYVORA/qyvora-nzinga/internal/target"
 	"github.com/QYVORA/qyvora-nzinga/internal/version"
@@ -33,6 +34,7 @@ Usage modes:
   nzinga assess --target example.com     full pipeline against an authorized live target
   nzinga domain|organization|username|infrastructure <name>
                                          run the target-specific collection pipeline
+  nzinga dork <domain>                   search-engine dorking over a domain (opt-in)
   nzinga sources list|show               list intelligence sources
   nzinga findings|evidence|graph         inspect the latest session
   nzinga report                          render the latest assessment report
@@ -136,6 +138,8 @@ func init() {
 	rootCmd.AddCommand(newAnalyzeCmd())
 	rootCmd.AddCommand(newReportCmd())
 	rootCmd.AddCommand(newSourcesCmd())
+	rootCmd.AddCommand(newDorkCmd())
+	rootCmd.AddCommand(newDorksCmd())
 
 	rootCmd.SetVersionTemplate(fmt.Sprintf("nzinga %s\n", version.String()))
 }
@@ -154,6 +158,7 @@ func initConfig() {
 	initPrinter()
 	app.targets = target.NewManager(v.GetString("target.state"))
 	app.store = session.NewStore(v.GetString("session.dir"))
+	app.dorks = loadDorkCatalog()
 	app.reg = sources.NewRegistry(allSources()...)
 	if app.eventsF != "" {
 		if err := app.resolveEvents(rootCmd.Context()); err != nil {
@@ -227,8 +232,20 @@ func allSources() []sources.Source {
 		sources.NewWhois(whoisPort),
 		sources.NewGitHub(shared, app.cfg.GetString("sources.github.token")),
 		sources.NewAbuseIPDB(shared, app.cfg.GetString("sources.abuseipdb.token")),
+		sources.NewSearch(app.cfg, shared, app.dorks),
 		sources.NewSimulation(),
 	}
+}
+
+// loadDorkCatalog loads the embedded dork template catalog. A catalog failure
+// records an init error so the binary still starts but collection is refused.
+func loadDorkCatalog() *search.DorkSet {
+	set, err := search.LoadEmbedded()
+	if err != nil && app.initErr == nil {
+		app.initErr = errs.WrapExitError(1, "loading embedded dork catalog", err)
+		return nil
+	}
+	return set
 }
 
 // buildSharedClient constructs the hardened HTTP client from configuration.

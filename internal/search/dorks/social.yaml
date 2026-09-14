@@ -1,0 +1,25 @@
+- id: social.github
+  category: social
+  name: GitHub mentions
+  description: Public GitHub pages mentioning the target handle or name.
+  query: site:github.com {target}
+- id: social.linkedin
+  category: social
+  name: LinkedIn profiles
+  description: LinkedIn profiles matching the target.
+  query: site:linkedin.com {target}
+- id: social.twitter
+  category: social
+  name: X / Twitter mentions
+  description: Posts on X matching the target.
+  query: site:x.com {target}
+- id: social.reddit
+  category: social
+  name: Reddit mentions
+  description: Reddit posts matching the target.
+  query: site:reddit.com {target}
+- id: social.bluesky
+  category: social
+  name: Bluesky mentions
+  description: BlueSky posts matching the target.
+  query: site:bsky.app {target}

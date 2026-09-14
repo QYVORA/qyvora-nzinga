@@ -349,6 +349,9 @@ func (a *appState) runPipeline(ctx context.Context, cmd *cobra.Command, opts tar
 // planRun prints the sources that would run without touching the network.
 func (a *appState) planRun(cmd *cobra.Command, t *models.Target, opts targetOptions) (*models.Session, error) {
 	ids := []string(nil)
+	if a.cfg.GetBool("collect.search_only") {
+		ids = []string{"search"}
+	}
 	var plan []models.Source
 	switch t.Type {
 	case models.TargetDomain, models.TargetInfrastructure:

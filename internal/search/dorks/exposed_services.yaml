@@ -1,0 +1,35 @@
+- id: exposed.git
+  category: exposed-services
+  name: Exposed git indices
+  description: Directory listings that hint at an exposed .git working tree.
+  query: site:{target} intitle:"index of" ".git"
+- id: exposed.backups
+  category: exposed-services
+  name: Backup and archive files
+  description: Backup, archive and old-version files indexed on the target.
+  query: site:{target} filetype:bak OR filetype:old OR filetype:backup
+- id: exposed.archives
+  category: exposed-services
+  name: Compressed archives
+  description: Compressed archive files indexed on the target.
+  query: site:{target} filetype:zip OR filetype:tar OR filetype:gz OR filetype:rar
+- id: exposed.sql
+  category: exposed-services
+  name: SQL dumps
+  description: SQL dump files indexed on the target.
+  query: site:{target} filetype:sql
+- id: exposed.logs
+  category: exposed-services
+  name: Log files
+  description: Log files indexed on the target.
+  query: site:{target} filetype:log
+- id: exposed.env
+  category: exposed-services
+  name: Environment files
+  description: Environment and dotenv-style files indexed on the target.
+  query: site:{target} filetype:env OR intitle:"index of" ".env"
+- id: exposed.directory_listing
+  category: exposed-services
+  name: Directory listings
+  description: Raw directory listings indexed for the target.
+  query: site:{target} intitle:"index of"

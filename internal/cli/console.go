@@ -131,6 +131,8 @@ func (c *nzingaConsole) completer() []readline.PrefixCompleterInterface {
 		readline.PcItem("username"),
 		readline.PcItem("ip"),
 		readline.PcItem("infrastructure"),
+		readline.PcItem("dork"),
+		readline.PcItem("dorks"),
 		readline.PcItem("analyze"),
 		readline.PcItem("findings"),
 		readline.PcItem("evidence"),
@@ -266,6 +268,26 @@ func (c *nzingaConsole) execCommand(name string, args []string) (bool, error) {
 			opts.value = v
 		}
 		return false, runCobraCollect(c.ctx, sim, opts)
+	case "dork", "dorking":
+		opts := targetFlagsFrom(sim)
+		opts.typ = "domain"
+		if v := firstTargetArg(args); v != "" {
+			opts.value = v
+		}
+		if opts.value == "" {
+			return false, errors.New("usage: dork <domain>")
+		}
+		sess, err := runDorkPipeline(c.ctx, sim, opts)
+		if err != nil {
+			return false, err
+		}
+		if sess == nil {
+			return false, nil
+		}
+		return false, renderSession(c.ctx, sess)
+	case "dorks":
+		printDorksList()
+		return false, nil
 	case "analyze", "rules":
 		return false, runAnalyze(c.ctx, nil)
 	case "findings", "finds":
@@ -382,6 +404,8 @@ func (c *nzingaConsole) help() {
 		{"username", "collect and analyze a username target"},
 		{"ip", "collect and analyze an IP target"},
 		{"infrastructure", "collect and analyze an infrastructure target"},
+		{"dork", "search-engine dorking over a domain (offline by default)"},
+		{"dorks", "list the embedded dork query templates"},
 		{"analyze", "review findings and risk for the latest session"},
 		{"findings", "list rule findings from the latest session"},
 		{"evidence", "list evidence artifacts from the latest session"},
