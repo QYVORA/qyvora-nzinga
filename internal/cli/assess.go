@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 	"sort"
 
 	"github.com/spf13/cobra"
@@ -409,6 +410,13 @@ func writeReport(sess *models.Session, format, out string) error {
 		return errs.WrapExitError(1, "rendering report", err)
 	}
 	if out == "" {
+		// When --events stdout owns the machine stream, the report (terminal
+		// format only, per the flag guard) moves to stderr so stdout stays pure
+		// JSONL.
+		if app.stdoutOwned {
+			_, _ = fmt.Fprint(os.Stderr, content)
+			return nil
+		}
 		_, _ = fmt.Fprint(app.printer.Writer(), content)
 		return nil
 	}

@@ -36,6 +36,10 @@ type appState struct {
 	eventStream *events.Stream
 	eventSink   io.Writer
 
+	// stdoutOwned is set when --events stdout is active: stdout then carries
+	// only the JSONL event stream, so report rendering routes to stderr.
+	stdoutOwned bool
+
 	cfgFile   string
 	verbose   bool
 	quiet     bool
@@ -90,8 +94,17 @@ func (a *appState) resolveEvents(ctx context.Context) error {
 		return nil
 	case "stdout":
 		w = os.Stdout
+		a.stdoutOwned = true
+		// stdout carries only the JSONL event stream; every human and report
+		// line routes to stderr (writer is set in initPrinter and may be
+		// reassigned here because resolveEvents runs after initPrinter).
+		a.printer.SetWriter(os.Stderr)
 	case "stderr":
 		w = os.Stderr
+		// The event JSONL stream owns stderr in machine mode: route human
+		// diagnostics away so strict JSONL consumers never see plain log
+		// lines interleaved with events.
+		a.log.SetWriter(io.Discard)
 	default:
 		f, err := os.OpenFile(a.eventsF, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 		if err != nil {
