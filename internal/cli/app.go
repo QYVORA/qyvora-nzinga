@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 
@@ -89,8 +90,8 @@ func (a *appState) emitf(format string, args ...any) {
 // resolveEvents configures the event stream sink.
 func (a *appState) resolveEvents(ctx context.Context) error {
 	var w io.Writer
-	switch a.eventsF {
-	case "", "off":
+	switch strings.ToLower(a.eventsF) {
+	case "", "off", "none", "disable", "disabled":
 		return nil
 	case "stdout":
 		w = os.Stdout
@@ -106,7 +107,10 @@ func (a *appState) resolveEvents(ctx context.Context) error {
 		// lines interleaved with events.
 		a.log.SetWriter(io.Discard)
 	default:
-		f, err := os.OpenFile(a.eventsF, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+		// Truncated, not appended, so one file holds exactly one run's
+		// events. Appending left no run boundary in the file, which matters
+		// to anything tailing it.
+		f, err := os.OpenFile(a.eventsF, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 		if err != nil {
 			return fmt.Errorf("opening events file: %w", err)
 		}
