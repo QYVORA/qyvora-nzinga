@@ -1,0 +1,16 @@
+- id: human.employer.linkedin
+  category: employer
+  name: LinkedIn company employees
+  description: Find employees of a company on LinkedIn
+  query: site:linkedin.com "{target}" employees
+  tags:
+    - google-dork
+    - organization
+- id: human.employer.about
+  category: employer
+  name: Company about pages
+  description: Find about/team pages mentioning the organization
+  query: site:{target} (inurl:about OR inurl:team)
+  tags:
+    - google-dork
+    - organization

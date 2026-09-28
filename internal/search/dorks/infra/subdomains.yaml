@@ -1,0 +1,24 @@
+- id: infra.subdomain.enumerate
+  category: subdomains
+  name: Subdomain enumeration
+  description: Enumerate indexed subdomains of the target
+  query: site:*.{target}
+  tags:
+    - enumeration
+    - google-dork
+- id: infra.subdomain.dev
+  category: subdomains
+  name: Development subdomains
+  description: Find development and staging environments
+  query: site:{target} (inurl:dev OR inurl:staging OR inurl:test)
+  tags:
+    - dev
+    - google-dork
+- id: infra.subdomain.api
+  category: subdomains
+  name: API endpoints
+  description: Find API subdomains and endpoints
+  query: site:{target} inurl:api
+  tags:
+    - api
+    - google-dork

@@ -1,0 +1,32 @@
+- id: infra.login.admin
+  category: login-panels
+  name: Admin login pages
+  description: Find admin login interfaces on the target domain
+  query: site:{target} inurl:admin
+  tags:
+    - admin
+    - google-dork
+- id: infra.login.wp
+  category: login-panels
+  name: WordPress login
+  description: Find WordPress admin login pages
+  query: site:{target} inurl:wp-admin
+  tags:
+    - wordpress
+    - google-dork
+- id: infra.login.phpmyadmin
+  category: login-panels
+  name: phpMyAdmin interface
+  description: Find phpMyAdmin database management interfaces
+  query: site:{target} inurl:phpmyadmin
+  tags:
+    - database
+    - google-dork
+- id: infra.login.portal
+  category: login-panels
+  name: Login portals
+  description: Find general login and signin pages
+  query: site:{target} (inurl:login OR inurl:signin)
+  tags:
+    - login
+    - google-dork

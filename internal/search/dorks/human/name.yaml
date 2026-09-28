@@ -1,0 +1,16 @@
+- id: human.name.linkedin
+  category: name
+  name: LinkedIn name search
+  description: Search for a person's name on LinkedIn
+  query: site:linkedin.com "{target}"
+  tags:
+    - google-dork
+    - person
+- id: human.name.general
+  category: name
+  name: General name search
+  description: Broad web search for a person's name
+  query: '"{target}"'
+  tags:
+    - google-dork
+    - person

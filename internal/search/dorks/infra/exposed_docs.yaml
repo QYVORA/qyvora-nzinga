@@ -1,0 +1,32 @@
+- id: infra.docs.pdf
+  category: exposed-docs
+  name: Exposed PDF documents
+  description: Find publicly indexed PDF files on the target domain
+  query: site:{target} filetype:pdf
+  tags:
+    - documents
+    - google-dork
+- id: infra.docs.xlsx
+  category: exposed-docs
+  name: Exposed Excel spreadsheets
+  description: Find publicly indexed Excel files on the target domain
+  query: site:{target} filetype:xlsx
+  tags:
+    - documents
+    - google-dork
+- id: infra.docs.docx
+  category: exposed-docs
+  name: Exposed Word documents
+  description: Find publicly indexed Word documents on the target domain
+  query: site:{target} filetype:docx
+  tags:
+    - documents
+    - google-dork
+- id: infra.docs.backup
+  category: exposed-docs
+  name: Backup files
+  description: Find backup archives that may contain sensitive data
+  query: site:{target} (filetype:bak OR filetype:sql OR filetype:zip)
+  tags:
+    - backup
+    - google-dork

@@ -1,0 +1,16 @@
+- id: human.email.general
+  category: email
+  name: Email address search
+  description: Search for mentions of an email address
+  query: '"{target}"'
+  tags:
+    - google-dork
+    - email
+- id: human.email.breach
+  category: email
+  name: Email in paste sites
+  description: Search for email in paste/leak sites
+  query: site:pastebin.com "{target}"
+  tags:
+    - google-dork
+    - breach
