@@ -90,9 +90,10 @@ func (a *appState) emitf(format string, args ...any) {
 // resolveEvents configures the event stream sink.
 func (a *appState) resolveEvents(ctx context.Context) error {
 	var w io.Writer
-	switch strings.ToLower(a.eventsF) {
-	case "", "off", "none", "disable", "disabled":
+	if eventsDisabled(a.eventsF) {
 		return nil
+	}
+	switch strings.ToLower(a.eventsF) {
 	case "stdout":
 		w = os.Stdout
 		a.stdoutOwned = true
@@ -119,4 +120,18 @@ func (a *appState) resolveEvents(ctx context.Context) error {
 	a.eventStream = events.NewStream(w)
 	a.eventSink = w
 	return nil
+}
+
+// eventsDisabled reports whether a --events value asks for no stream at all.
+//
+// The interactive guard and the event plumbing both need this answer, so the
+// words are named once. A value that turns the stream off must not read as a
+// request to send it somewhere: `tool --events off` opens the session
+// happily, because there is nothing for it to contradict.
+func eventsDisabled(spec string) bool {
+	switch strings.ToLower(spec) {
+	case "", "off", "none", "disable", "disabled":
+		return true
+	}
+	return false
 }
