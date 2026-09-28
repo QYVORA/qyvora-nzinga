@@ -17,6 +17,8 @@ package search
 import (
 	"embed"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -40,15 +42,43 @@ const (
 	CategoryTechnology Category = "technology"
 	// CategorySocial targets a name or handle across public platforms.
 	CategorySocial Category = "social"
+
+	// Human-centric OSINT categories (username, name, email, employer).
+	// CategoryUsername targets username/handle enumeration across platforms.
+	CategoryUsername Category = "username"
+	// CategoryName targets person name searches across public sources.
+	CategoryName Category = "name"
+	// CategoryEmail targets email address searches and breach lookups.
+	CategoryEmail Category = "email"
+	// CategoryEmployer targets organization/employer relationship searches.
+	CategoryEmployer Category = "employer"
+
+	// Infrastructure OSINT categories (exposed-docs, login-panels, subdomains).
+	// CategoryExposedDocs targets publicly indexed documents on a domain.
+	CategoryExposedDocs Category = "exposed-docs"
+	// CategoryLoginPanels targets admin and login interfaces on a domain.
+	CategoryLoginPanels Category = "login-panels"
+	// CategorySubdomains targets subdomain enumeration and discovery.
+	CategorySubdomains Category = "subdomains"
 )
 
 // AllCategories lists every category in documentation order.
 var AllCategories = []Category{
+	// Original categories
 	CategoryGeneral,
 	CategoryDocuments,
 	CategoryExposedServices,
 	CategoryTechnology,
 	CategorySocial,
+	// Human-centric categories
+	CategoryUsername,
+	CategoryName,
+	CategoryEmail,
+	CategoryEmployer,
+	// Infrastructure categories
+	CategoryExposedDocs,
+	CategoryLoginPanels,
+	CategorySubdomains,
 }
 
 // ParseCategory parses a category name, reporting whether it is known.
@@ -133,7 +163,7 @@ type DorkSet struct {
 	byCategory map[Category][]Dork
 }
 
-//go:embed dorks/*.yaml
+//go:embed dorks/*.yaml dorks/human/*.yaml dorks/infra/*.yaml
 var dorkFS embed.FS
 
 // LoadEmbedded loads and validates the shipped template catalog.
@@ -141,46 +171,42 @@ func LoadEmbedded() (*DorkSet, error) {
 	return loadDorkSet(dorkFS, "dorks")
 }
 
-// loadDorkSet reads every *.yaml template file, validates the templates, and
-// returns the catalog. A single invalid template fails the whole load so the
-// shipped catalog can never silently lose an entry.
-func loadDorkSet(fsys embed.FS, dir string) (*DorkSet, error) {
-	entries, err := fsys.ReadDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("reading embedded dorks: %w", err)
-	}
-	if len(entries) == 0 {
-		return nil, fmt.Errorf("embedded dorks directory is empty")
-	}
-
+// LoadWithCustom loads the embedded catalog and merges it with a custom
+// wordlist file. If builtinEnabled is false, only the custom wordlist is used.
+// The custom file must be a YAML file in the same DorkTemplate schema.
+func LoadWithCustom(customPath string, builtinEnabled bool) (*DorkSet, error) {
 	var list []Dork
 	seen := map[string]bool{}
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
-			continue
-		}
-		data, err := fsys.ReadFile(dir + "/" + entry.Name())
+
+	// Load built-in dorks first if enabled.
+	if builtinEnabled {
+		builtinSet, err := LoadEmbedded()
 		if err != nil {
-			return nil, fmt.Errorf("reading %s: %w", entry.Name(), err)
+			return nil, fmt.Errorf("loading built-in dorks: %w", err)
 		}
-		var file []Dork
-		if err := yaml.Unmarshal(data, &file); err != nil {
-			return nil, fmt.Errorf("parsing %s: %w", entry.Name(), err)
+		list = builtinSet.All()
+		for _, d := range list {
+			seen[d.ID] = true
 		}
-		for i := range file {
-			d := file[i]
-			if d.ID == "" {
-				d.ID = strings.TrimSuffix(entry.Name(), ".yaml") + "-" + fmt.Sprintf("%02d", i+1)
-			}
-			if err := d.validate(); err != nil {
-				return nil, fmt.Errorf("dork %s: %w", entry.Name(), err)
-			}
+	}
+
+	// Load and append custom dorks.
+	if customPath != "" {
+		customDorks, err := loadCustomFile(customPath)
+		if err != nil {
+			return nil, fmt.Errorf("loading custom wordlist: %w", err)
+		}
+		for _, d := range customDorks {
 			if seen[d.ID] {
-				return nil, fmt.Errorf("duplicate dork id %q", d.ID)
+				return nil, fmt.Errorf("custom dork id %q conflicts with built-in dork", d.ID)
 			}
 			seen[d.ID] = true
 			list = append(list, d)
 		}
+	}
+
+	if len(list) == 0 {
+		return nil, fmt.Errorf("no dork templates loaded (built-in disabled and no custom file)")
 	}
 
 	sortTemplates(list)
@@ -192,6 +218,104 @@ func loadDorkSet(fsys embed.FS, dir string) (*DorkSet, error) {
 		set.byCategory[d.Category] = append(set.byCategory[d.Category], d)
 	}
 	return set, nil
+}
+
+// loadCustomFile loads and validates a custom dork YAML file from disk.
+func loadCustomFile(path string) ([]Dork, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("reading file: %w", err)
+	}
+
+	var dorks []Dork
+	if err := yaml.Unmarshal(data, &dorks); err != nil {
+		return nil, fmt.Errorf("parsing YAML: %w", err)
+	}
+
+	for i := range dorks {
+		if err := dorks[i].validate(); err != nil {
+			return nil, fmt.Errorf("dork #%d: %w", i+1, err)
+		}
+	}
+
+	return dorks, nil
+}
+
+// loadDorkSet reads every *.yaml template file (including subdirectories),
+// validates the templates, and returns the catalog. A single invalid template
+// fails the whole load so the shipped catalog can never silently lose an entry.
+func loadDorkSet(fsys embed.FS, dir string) (*DorkSet, error) {
+	var list []Dork
+	seen := map[string]bool{}
+
+	// Walk the directory tree recursively.
+	if err := walkDir(fsys, dir, func(path string) error {
+		if !strings.HasSuffix(path, ".yaml") {
+			return nil
+		}
+		data, err := fsys.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("reading %s: %w", path, err)
+		}
+		var file []Dork
+		if err := yaml.Unmarshal(data, &file); err != nil {
+			return fmt.Errorf("parsing %s: %w", path, err)
+		}
+		for i := range file {
+			d := file[i]
+			if d.ID == "" {
+				base := strings.TrimSuffix(filepath.Base(path), ".yaml")
+				d.ID = base + "-" + fmt.Sprintf("%02d", i+1)
+			}
+			if err := d.validate(); err != nil {
+				return fmt.Errorf("dork %s: %w", path, err)
+			}
+			if seen[d.ID] {
+				return fmt.Errorf("duplicate dork id %q", d.ID)
+			}
+			seen[d.ID] = true
+			list = append(list, d)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	if len(list) == 0 {
+		return nil, fmt.Errorf("embedded dorks directory is empty")
+	}
+
+	sortTemplates(list)
+	set := &DorkSet{
+		all:        list,
+		byCategory: map[Category][]Dork{},
+	}
+	for _, d := range list {
+		set.byCategory[d.Category] = append(set.byCategory[d.Category], d)
+	}
+	return set, nil
+}
+
+// walkDir recursively walks an embedded filesystem and calls fn for each file.
+func walkDir(fsys embed.FS, dir string, fn func(path string) error) error {
+	entries, err := fsys.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("reading embedded dorks: %w", err)
+	}
+	for _, entry := range entries {
+		path := dir + "/" + entry.Name()
+		if entry.IsDir() {
+			// Recurse into subdirectories.
+			if err := walkDir(fsys, path, fn); err != nil {
+				return err
+			}
+		} else {
+			if err := fn(path); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // All returns every validated template in stable (category, id) order.
