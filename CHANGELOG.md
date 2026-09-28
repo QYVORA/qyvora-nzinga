@@ -7,8 +7,39 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- **Human-centric OSINT dork templates** — 876 username enumeration templates
+  derived from WhatsMyName (CC BY-SA 4.0) and Sherlock (MIT) projects,
+  covering 900+ social platforms and web services. New dork categories:
+  `username`, `name`, `email`, `employer` (human-focused) plus `exposed-docs`,
+  `login-panels`, `subdomains` (infrastructure-focused). Templates embedded at
+  build time in `internal/search/dorks/human/` and `internal/search/dorks/infra/`
+  subdirectories.
+- **Custom wordlist support** — config keys `sources.search.custom_wordlist_path`
+  (path to custom YAML file) and `sources.search.builtin_enabled` (default true).
+  Custom templates merge with built-in catalog, or replace it entirely when
+  `builtin_enabled=false`. Custom files validated against DorkTemplate schema
+  on load; duplicate IDs with built-in templates are rejected.
+- **Extended target type support** — search source now supports `TargetUsername`
+  and `TargetOrganization` in addition to `TargetDomain`. Source outputs include
+  `NodeUsername`, `NodeEmail`, and `NodeSocialAccount` entity types for
+  human-centric reconnaissance.
+- **Data attribution** — NOTICE file documents data sources (WhatsMyName,
+  Sherlock) with license terms and transformation process. Original data parsed,
+  merged, deduplicated by domain, and converted to Nzinga schema. No upstream
+  application code or license files vendored.
+- **Transformation script** — `scripts/transform-dorks.go` one-time tool to
+  parse external JSON data (WhatsMyName `wmn-data.json`, Sherlock `data.json`)
+  and emit Nzinga YAML templates. Script filters NSFW sites, validates
+  placeholders, and generates human/infra category files.
+
 ### Changed
 
+- **Dork loading** — `internal/search/dork.go` now recursively loads YAML files
+  from subdirectories via `walkDir` function. `go:embed` directive updated to
+  include `dorks/human/*.yaml` and `dorks/infra/*.yaml`. Total embedded
+  templates: 900+ across 12 categories (5 original + 7 new).
 - **Unified version system** — `internal/version` identity now also carries
   official QYVORA contact details (website, support, location), surfaced by
   `nzinga version` in terminal and machine formats.
@@ -29,17 +60,19 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- **Search engine dorking** — new `internal/search` package with 30 built-in
-  dork templates across 5 YAML category files (general, documents, social,
-  technology, exposed-services). The CLI `dork` command and console
-  `dork`/`dorks` commands scan a configured search provider and render results
-  with source, snippet and `StateInferred` / `ConfidencePossible` status
-  (results are unverified).
+- **Search engine dorking** — expanded from 30 to 900+ dork templates across
+  12 YAML category files (original: general, documents, social, technology,
+  exposed-services; new: username, name, email, employer, exposed-docs,
+  login-panels, subdomains). The CLI `dork` command and console `dork`/`dorks`
+  commands scan a configured search provider and render results with source,
+  snippet and `StateInferred` / `ConfidencePossible` status (results are
+  unverified).
 - **Search intelligence source** — collector stage `search` (opt-in,
   `sources.search.enabled=false` by default) feeds surfaced search hits into
   evidence with caps and categorized dork coverage. Config: `search.provider`,
   `search.endpoint`, `search.token`, `search.method`, `search.query_param`,
-  `sources.search.max_queries` (default 25) and `sources.search.categories`.
+  `sources.search.max_queries` (default 25), `sources.search.categories`,
+  `sources.search.custom_wordlist_path`, and `sources.search.builtin_enabled`.
 - **Anti-automation honesty** — when a provider responds with a CAPTCHA /
   challenge or HTTP 429 rate limit, NZINGA reports
   `anti-automation challenge detected and not bypassed` (or a rate-limit
