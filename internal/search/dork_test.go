@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 )
@@ -190,5 +191,291 @@ func TestParseResultsShapes(t *testing.T) {
 	}
 	if _, err = parseResults([]byte(`not json`)); err == nil {
 		t.Fatal("garbage should error")
+	}
+}
+
+// TestLoadEmbeddedSubdirectories verifies that dorks are loaded from subdirectories
+// (human/ and infra/) as well as the root dorks/ directory.
+func TestLoadEmbeddedSubdirectories(t *testing.T) {
+	set, err := LoadEmbedded()
+	if err != nil {
+		t.Fatalf("LoadEmbedded: %v", err)
+	}
+
+	// Check that new categories from subdirectories are present.
+	newCategories := []Category{
+		CategoryUsername,
+		CategoryName,
+		CategoryEmail,
+		CategoryEmployer,
+		CategoryExposedDocs,
+		CategoryLoginPanels,
+		CategorySubdomains,
+	}
+
+	for _, cat := range newCategories {
+		dorks := set.InCategory(cat)
+		if len(dorks) == 0 {
+			t.Errorf("category %q has no dorks (subdirectory loading may have failed)", cat)
+		}
+	}
+
+	// Verify username category has significant entries (from WhatsMyName/Sherlock data).
+	usernameDorks := set.InCategory(CategoryUsername)
+	if len(usernameDorks) < 100 {
+		t.Errorf("username category has only %d dorks, expected hundreds from WhatsMyName/Sherlock", len(usernameDorks))
+	}
+}
+
+// TestLoadWithCustomMerge tests loading with a custom wordlist merged with built-ins.
+func TestLoadWithCustomMerge(t *testing.T) {
+	// Create a temporary custom wordlist file.
+	tmpfile, err := os.CreateTemp("", "custom-dorks-*.yaml")
+	if err != nil {
+		t.Fatalf("creating temp file: %v", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	customYAML := `- id: test.custom.one
+  category: username
+  name: Test custom dork 1
+  description: Custom test entry
+  query: https://test.example.com/{target}
+  tags:
+    - test
+- id: test.custom.two
+  category: exposed-docs
+  name: Test custom dork 2
+  query: site:{target} filetype:test
+  tags:
+    - test
+`
+	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
+		t.Fatalf("writing temp file: %v", err)
+	}
+	tmpfile.Close()
+
+	// Load with custom wordlist merged.
+	set, err := LoadWithCustom(tmpfile.Name(), true)
+	if err != nil {
+		t.Fatalf("LoadWithCustom: %v", err)
+	}
+
+	// Verify built-in dorks are present.
+	if set.Count() < 900 {
+		t.Errorf("merged set has only %d dorks, expected 900+ (built-in + custom)", set.Count())
+	}
+
+	// Verify custom dorks are present.
+	custom1, ok := set.ByID("test.custom.one")
+	if !ok {
+		t.Fatal("custom dork test.custom.one not found in merged set")
+	}
+	if custom1.Name != "Test custom dork 1" {
+		t.Errorf("custom dork has wrong name: %q", custom1.Name)
+	}
+
+	custom2, ok := set.ByID("test.custom.two")
+	if !ok {
+		t.Fatal("custom dork test.custom.two not found in merged set")
+	}
+	if custom2.Category != CategoryExposedDocs {
+		t.Errorf("custom dork has wrong category: %q", custom2.Category)
+	}
+}
+
+// TestLoadWithCustomOnly tests loading only custom wordlist (built-ins disabled).
+func TestLoadWithCustomOnly(t *testing.T) {
+	tmpfile, err := os.CreateTemp("", "custom-only-*.yaml")
+	if err != nil {
+		t.Fatalf("creating temp file: %v", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	customYAML := `- id: custom.only.test
+  category: username
+  name: Custom only test
+  query: https://custom.example.com/{target}
+  tags:
+    - custom
+`
+	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
+		t.Fatalf("writing temp file: %v", err)
+	}
+	tmpfile.Close()
+
+	// Load with built-ins disabled.
+	set, err := LoadWithCustom(tmpfile.Name(), false)
+	if err != nil {
+		t.Fatalf("LoadWithCustom (builtin disabled): %v", err)
+	}
+
+	// Should have only 1 dork.
+	if set.Count() != 1 {
+		t.Errorf("custom-only set has %d dorks, expected exactly 1", set.Count())
+	}
+
+	custom, ok := set.ByID("custom.only.test")
+	if !ok {
+		t.Fatal("custom dork not found")
+	}
+	if custom.Name != "Custom only test" {
+		t.Errorf("custom dork has wrong name: %q", custom.Name)
+	}
+}
+
+// TestLoadWithCustomInvalidFile tests error handling for malformed custom files.
+func TestLoadWithCustomInvalidFile(t *testing.T) {
+	tmpfile, err := os.CreateTemp("", "invalid-*.yaml")
+	if err != nil {
+		t.Fatalf("creating temp file: %v", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	// Write invalid YAML.
+	if _, err := tmpfile.Write([]byte("not: valid: yaml: structure:")); err != nil {
+		t.Fatalf("writing temp file: %v", err)
+	}
+	tmpfile.Close()
+
+	// Should fail to parse.
+	_, err = LoadWithCustom(tmpfile.Name(), true)
+	if err == nil {
+		t.Fatal("LoadWithCustom should fail on invalid YAML")
+	}
+	if !strings.Contains(err.Error(), "parsing YAML") {
+		t.Errorf("error should mention YAML parsing: %v", err)
+	}
+}
+
+// TestLoadWithCustomMissingPlaceholder tests validation of custom dorks.
+func TestLoadWithCustomMissingPlaceholder(t *testing.T) {
+	tmpfile, err := os.CreateTemp("", "missing-placeholder-*.yaml")
+	if err != nil {
+		t.Fatalf("creating temp file: %v", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	// Dork without {target} placeholder.
+	customYAML := `- id: invalid.no.placeholder
+  category: username
+  name: Invalid dork
+  query: https://example.com/static
+  tags:
+    - invalid
+`
+	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
+		t.Fatalf("writing temp file: %v", err)
+	}
+	tmpfile.Close()
+
+	// Should fail validation.
+	_, err = LoadWithCustom(tmpfile.Name(), false)
+	if err == nil {
+		t.Fatal("LoadWithCustom should fail on dork without {target}")
+	}
+	if !strings.Contains(err.Error(), "must contain {target}") {
+		t.Errorf("error should mention missing {target}: %v", err)
+	}
+}
+
+// TestLoadWithCustomDuplicateID tests that duplicate IDs are rejected.
+func TestLoadWithCustomDuplicateID(t *testing.T) {
+	tmpfile, err := os.CreateTemp("", "duplicate-*.yaml")
+	if err != nil {
+		t.Fatalf("creating temp file: %v", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	// Use an ID that exists in built-in dorks (e.g., from general.yaml).
+	customYAML := `- id: general.admin
+  category: username
+  name: Duplicate ID test
+  query: https://example.com/{target}
+  tags:
+    - duplicate
+`
+	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
+		t.Fatalf("writing temp file: %v", err)
+	}
+	tmpfile.Close()
+
+	// Should fail due to duplicate ID with built-in.
+	_, err = LoadWithCustom(tmpfile.Name(), true)
+	if err == nil {
+		t.Fatal("LoadWithCustom should fail on duplicate ID")
+	}
+	if !strings.Contains(err.Error(), "conflicts with built-in") {
+		t.Errorf("error should mention ID conflict: %v", err)
+	}
+}
+
+// TestNewCategoryRendering tests that new categories render templates correctly.
+func TestNewCategoryRendering(t *testing.T) {
+	set, err := LoadEmbedded()
+	if err != nil {
+		t.Fatalf("LoadEmbedded: %v", err)
+	}
+
+	testCases := []struct {
+		category Category
+		target   string
+	}{
+		{CategoryUsername, "testuser"},
+		{CategoryEmail, "test@example.com"},
+		{CategoryName, "John Doe"},
+		{CategoryEmployer, "Acme Corp"},
+		{CategoryExposedDocs, "example.com"},
+		{CategoryLoginPanels, "example.com"},
+		{CategorySubdomains, "example.com"},
+	}
+
+	for _, tc := range testCases {
+		dorks := set.InCategory(tc.category)
+		if len(dorks) == 0 {
+			t.Errorf("category %q has no dorks", tc.category)
+			continue
+		}
+
+		// Test rendering the first dork in the category.
+		rendered, err := dorks[0].Render(tc.target)
+		if err != nil {
+			t.Errorf("Render(%q) for category %q: %v", tc.target, tc.category, err)
+			continue
+		}
+		if !strings.Contains(rendered, tc.target) {
+			t.Errorf("rendered query for %q doesn't contain target %q: %s", tc.category, tc.target, rendered)
+		}
+	}
+}
+
+// TestCategoryConstants verifies all new category constants are properly defined.
+func TestCategoryConstants(t *testing.T) {
+	newCategories := map[Category]bool{
+		CategoryUsername:    true,
+		CategoryName:        true,
+		CategoryEmail:       true,
+		CategoryEmployer:    true,
+		CategoryExposedDocs: true,
+		CategoryLoginPanels: true,
+		CategorySubdomains:  true,
+	}
+
+	for cat := range newCategories {
+		if !knownCategory(cat) {
+			t.Errorf("category %q not recognized by ParseCategory", cat)
+		}
+	}
+
+	// Verify all are in AllCategories.
+	allCatMap := make(map[Category]bool)
+	for _, c := range AllCategories {
+		allCatMap[c] = true
+	}
+
+	for cat := range newCategories {
+		if !allCatMap[cat] {
+			t.Errorf("category %q not in AllCategories list", cat)
+		}
 	}
 }
