@@ -8,6 +8,7 @@ import (
 	errs "github.com/QYVORA/qyvora-nzinga/internal/errors"
 	"github.com/spf13/cobra"
 
+	"github.com/QYVORA/qyvora-nzinga/internal/capabilities"
 	"github.com/QYVORA/qyvora-nzinga/internal/version"
 	"github.com/QYVORA/qyvora-tui"
 )
@@ -51,6 +52,14 @@ func runTUI(root *cobra.Command, ctx context.Context) error {
 		Meta:     tuiCommands(root),
 	}
 
+	// The capability registry is built from the same live source registry the
+	// `capabilities` command reads, through the same normaliser, so the F1 view
+	// and the `capabilities -o json` output cannot disagree.
+	caps, err := tui.CapabilitiesFrom("nzinga", capabilities.New(app.reg.List()))
+	if err != nil {
+		return errs.NewExitError(1, "preparing the capability registry: "+err.Error())
+	}
+
 	code, err := tui.Run(tui.Config{
 		Title:   "QYVORA / NZINGA",
 		Version: version.String(),
@@ -60,7 +69,8 @@ func runTUI(root *cobra.Command, ctx context.Context) error {
 		// is redrawn in place by the tool and would flicker underneath the
 		// TUI's own frames. The transcript carries the same information as an
 		// event stream, which the interface can lay out properly.
-		Err: nil,
+		Err:          nil,
+		Capabilities: caps,
 	})
 	if err != nil {
 		if tui.IsNotInteractive(err) {
