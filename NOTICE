@@ -39,3 +39,53 @@ This product includes software developed by the following projects:
 - golang.org/x/text (BSD-3-Clause)
 
 Full license texts are available in the upstream module sources.
+
+
+================================================================================
+Data Source Attributions
+================================================================================
+
+The username enumeration dork templates embedded in this software are derived
+from the following publicly available data sources:
+
+1. WhatsMyName Project
+   Source: https://github.com/WebBreacher/WhatsMyName
+   Copyright (C) 2015-2026 Micah Hoffman
+   License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+   License URL: http://creativecommons.org/licenses/by-sa/4.0/
+   
+   The WhatsMyName project maintains a curated list of sites where usernames
+   can be checked for existence. The data has been transformed and adapted
+   into Nzinga's dork template schema.
+
+2. Sherlock Project
+   Source: https://github.com/sherlock-project/sherlock
+   Copyright (c) 2019 Sherlock Project
+   License: MIT License
+   
+   The Sherlock project provides a list of social network sites for username
+   enumeration. The data has been transformed and adapted into Nzinga's dork
+   template schema.
+
+3. Infrastructure Dorks (GHDB-Inspired)
+   The infrastructure dork templates in this software are manually curated and
+   inspired by common patterns from the Google Hacking Database (GHDB) and
+   general open-source intelligence gathering practices. These are original
+   works created specifically for Nzinga and are not direct copies of any
+   existing database.
+
+Data Transformation:
+The original data from WhatsMyName and Sherlock was:
+- Parsed and merged by domain
+- Deduplicated (preferring WhatsMyName when overlap exists)
+- Filtered to remove NSFW sites
+- Converted to Nzinga's YAML-based dork template schema
+- Embedded into the binary at build time
+
+No application code, tests, or license files from the source projects were
+included in this repository - only the transformed data files derived from
+their publicly available datasets.
+
+The transformed dork templates are distributed under the same Apache License
+2.0 as Nzinga itself, with attribution preserved as required by the source
+data licenses (CC BY-SA 4.0 for WhatsMyName, MIT for Sherlock).
