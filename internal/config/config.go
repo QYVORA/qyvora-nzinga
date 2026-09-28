@@ -97,6 +97,8 @@ func Load(cfgFile string) (*viper.Viper, error) {
 	v.SetDefault("sources.search.enabled", false)
 	v.SetDefault("sources.search.max_queries", 25)
 	v.SetDefault("sources.search.categories", "")
+	v.SetDefault("sources.search.custom_wordlist_path", "")
+	v.SetDefault("sources.search.builtin_enabled", true)
 	v.SetDefault("search.provider", "")
 	v.SetDefault("search.endpoint", "")
 	v.SetDefault("search.token", "")

@@ -271,12 +271,24 @@ func allSources() []sources.Source {
 	}
 }
 
-// loadDorkCatalog loads the embedded dork template catalog. A catalog failure
-// records an init error so the binary still starts but collection is refused.
+// loadDorkCatalog loads the dork template catalog. If a custom wordlist is
+// configured, it is merged with (or replaces) the embedded catalog. A catalog
+// failure records an init error so the binary still starts but collection is refused.
 func loadDorkCatalog() *search.DorkSet {
-	set, err := search.LoadEmbedded()
+	customPath := app.cfg.GetString("sources.search.custom_wordlist_path")
+	builtinEnabled := app.cfg.GetBool("sources.search.builtin_enabled")
+
+	var set *search.DorkSet
+	var err error
+
+	if customPath != "" {
+		set, err = search.LoadWithCustom(customPath, builtinEnabled)
+	} else {
+		set, err = search.LoadEmbedded()
+	}
+
 	if err != nil && app.initErr == nil {
-		app.initErr = errs.WrapExitError(1, "loading embedded dork catalog", err)
+		app.initErr = errs.WrapExitError(1, "loading dork catalog", err)
 		return nil
 	}
 	return set
