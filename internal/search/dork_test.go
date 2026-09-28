@@ -261,9 +261,13 @@ func TestLoadWithCustomMerge(t *testing.T) {
 		t.Fatalf("LoadWithCustom: %v", err)
 	}
 
-	// Verify built-in dorks are present.
-	if set.Count() < 900 {
-		t.Errorf("merged set has only %d dorks, expected 900+ (built-in + custom)", set.Count())
+	// Verify built-in dorks are present and the custom set merged on top.
+	embedded, err := LoadEmbedded()
+	if err != nil {
+		t.Fatalf("LoadEmbedded: %v", err)
+	}
+	if set.Count() <= embedded.Count() {
+		t.Errorf("merged set has %d dorks, expected the embedded %d plus custom entries", set.Count(), embedded.Count())
 	}
 
 	// Verify custom dorks are present.

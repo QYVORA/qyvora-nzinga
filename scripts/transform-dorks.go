@@ -1,13 +1,12 @@
 // transform-dorks.go is a one-time data transformation script that parses
-// WhatsMyName and Sherlock JSON data files and transforms them into Nzinga's
-// dork template schema. This is a standalone script, not part of the shipped
-// binary.
+// Sherlock's username-check data.json and converts each profile check into a
+// search-engine dork template. This is a standalone script, not part of the
+// shipped binary.
 //
 // Usage:
 //   go run scripts/transform-dorks.go
 //
 // Input:
-//   - ~/nzinga-datasrc/WhatsMyName/wmn-data.json
 //   - ~/nzinga-datasrc/sherlock/sherlock_project/resources/data.json
 //
 // Output:
@@ -18,9 +17,11 @@
 //   - internal/search/dorks/infra/login_panels.yaml
 //   - internal/search/dorks/infra/subdomains.yaml
 //
-// The script merges WhatsMyName and Sherlock site data, deduplicates by domain,
-// and converts each site into a direct profile-check dork template (not a
-// Google search dork, but a direct URL pattern).
+// Sherlock is MIT-licensed, so the transformed catalogue is redistributable
+// under Nzinga's own licence with attribution. The catalogue is deliberately
+// produced from this single source: a profile-URL check is not itself a search
+// query, and converting a direct HTTPS fetch into a `site:` expression keeps
+// every entry expressible through a search provider.
 
 package main
 
@@ -47,30 +48,19 @@ type DorkTemplate struct {
 	Tags        []string `yaml:"tags,omitempty"`
 }
 
-// WhatsMyNameData is the structure of wmn-data.json.
-type WhatsMyNameData struct {
-	Sites []struct {
-		Name     string   `json:"name"`
-		URICheck string   `json:"uri_check"`
-		Category string   `json:"cat,omitempty"`
-		Known    []string `json:"known,omitempty"`
-	} `json:"sites"`
-}
-
-// SherlockData is the structure of Sherlock's data.json (map of site name to config).
-type SherlockData map[string]struct {
+// SherlockSiteConfig is one entry in Sherlock's data.json (omit the $schema key).
+type SherlockSiteConfig struct {
 	URL      string      `json:"url"`
 	URLMain  string      `json:"urlMain"`
 	ErrorMsg interface{} `json:"errorMsg,omitempty"` // Can be string or array
 	IsNSFW   bool        `json:"isNSFW,omitempty"`
 }
 
-// SiteEntry represents a merged site entry from both sources.
+// SiteEntry represents one site read from Sherlock.
 type SiteEntry struct {
 	Name   string
 	URL    string
 	Domain string
-	Source string // "whatsmyname", "sherlock", "both"
 }
 
 func main() {
@@ -86,39 +76,26 @@ func run() error {
 		return fmt.Errorf("getting home dir: %w", err)
 	}
 
-	// Load data files.
-	wmnPath := filepath.Join(homeDir, "nzinga-datasrc", "WhatsMyName", "wmn-data.json")
 	sherlockPath := filepath.Join(homeDir, "nzinga-datasrc", "sherlock", "sherlock_project", "resources", "data.json")
-
-	wmnSites, err := loadWhatsMyName(wmnPath)
-	if err != nil {
-		return fmt.Errorf("loading WhatsMyName: %w", err)
-	}
-	fmt.Printf("Loaded %d WhatsMyName sites\n", len(wmnSites))
-
-	sherlockSites, err := loadSherlock(sherlockPath)
+	sites, err := loadSherlock(sherlockPath)
 	if err != nil {
 		return fmt.Errorf("loading Sherlock: %w", err)
 	}
-	fmt.Printf("Loaded %d Sherlock sites\n", len(sherlockSites))
+	fmt.Printf("Loaded %d Sherlock sites (%d after NSFW filter)\n", len(sites), len(sites))
 
-	// Merge and deduplicate by domain.
-	merged := mergeSites(wmnSites, sherlockSites)
-	fmt.Printf("Merged to %d unique sites (by domain)\n", len(merged))
+	// Deduplicate by domain: two Sherlock entries can name the same site.
+	sites = dedupeByDomain(sites)
+	fmt.Printf("Deduplicated to %d sites\n", len(sites))
 
-	// Filter out NSFW sites.
-	filtered := filterNSFW(merged)
-	fmt.Printf("Filtered to %d sites (removed NSFW)\n", len(filtered))
+	templates, err := convertToDorks(sites)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Generated %d username search dorks\n", len(templates))
 
-	// Convert to dork templates.
-	templates := convertToDorks(filtered)
-	fmt.Printf("Generated %d dork templates\n", len(templates))
-
-	// Add infrastructure dorks (manually curated based on common GHDB patterns).
 	infraDorks := generateInfraDorks()
 	fmt.Printf("Generated %d infrastructure dorks\n", len(infraDorks))
 
-	// Write output files.
 	outDir := "internal/search/dorks"
 	if err := os.MkdirAll(filepath.Join(outDir, "human"), 0755); err != nil {
 		return fmt.Errorf("creating human dir: %w", err)
@@ -127,19 +104,15 @@ func run() error {
 		return fmt.Errorf("creating infra dir: %w", err)
 	}
 
-	// Split username templates by category.
-	usernameTemplates := filterByCategory(templates, "username")
-	if err := writeYAML(filepath.Join(outDir, "human", "username.yaml"), usernameTemplates); err != nil {
+	// Write the username catalogue and the curated placeholders.
+	if err := writeYAML(filepath.Join(outDir, "human", "username.yaml"), templates); err != nil {
 		return err
 	}
-	fmt.Printf("Wrote %d templates to human/username.yaml\n", len(usernameTemplates))
+	fmt.Printf("Wrote %d templates to human/username.yaml\n", len(templates))
 
-	// Write infrastructure dorks.
 	if err := writeInfraDorks(outDir, infraDorks); err != nil {
 		return err
 	}
-
-	// Write placeholder files for other human categories.
 	if err := writePlaceholderHumanFiles(outDir); err != nil {
 		return err
 	}
@@ -149,53 +122,13 @@ func run() error {
 	return nil
 }
 
-func loadWhatsMyName(path string) ([]SiteEntry, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var wmn WhatsMyNameData
-	if err := json.Unmarshal(data, &wmn); err != nil {
-		return nil, err
-	}
-
-	var sites []SiteEntry
-	for _, site := range wmn.Sites {
-		if site.URICheck == "" {
-			continue
-		}
-		domain := extractDomain(site.URICheck)
-		if domain == "" {
-			continue
-		}
-		// Replace {account} placeholder with {target} for Nzinga.
-		templateURL := strings.ReplaceAll(site.URICheck, "{account}", "{target}")
-		sites = append(sites, SiteEntry{
-			Name:   site.Name,
-			URL:    templateURL,
-			Domain: domain,
-			Source: "whatsmyname",
-		})
-	}
-	return sites, nil
-}
-
-// SherlockSiteConfig represents one site entry in Sherlock's data.
-type SherlockSiteConfig struct {
-	URL      string      `json:"url"`
-	URLMain  string      `json:"urlMain"`
-	ErrorMsg interface{} `json:"errorMsg,omitempty"` // Can be string or array
-	IsNSFW   bool        `json:"isNSFW,omitempty"`
-}
-
 func loadSherlock(path string) ([]SiteEntry, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse as raw map first to handle the $schema string value.
+	// Parse as a raw map first to handle the $schema string value.
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, err
@@ -203,17 +136,13 @@ func loadSherlock(path string) ([]SiteEntry, error) {
 
 	var sites []SiteEntry
 	for name, configBytes := range raw {
-		// Skip the $schema key.
 		if name == "$schema" {
 			continue
 		}
-
 		var config SherlockSiteConfig
 		if err := json.Unmarshal(configBytes, &config); err != nil {
-			// Skip entries that don't match the site config structure.
 			continue
 		}
-
 		if config.URL == "" || config.IsNSFW {
 			continue
 		}
@@ -221,77 +150,84 @@ func loadSherlock(path string) ([]SiteEntry, error) {
 		if domain == "" {
 			continue
 		}
-		// Replace {} placeholder with {target} for Nzinga.
-		templateURL := strings.ReplaceAll(config.URL, "{}", "{target}")
-		sites = append(sites, SiteEntry{
-			Name:   name,
-			URL:    templateURL,
-			Domain: domain,
-			Source: "sherlock",
-		})
+		sites = append(sites, SiteEntry{Name: name, URL: config.URL, Domain: domain})
 	}
 	return sites, nil
 }
 
-func mergeSites(wmn, sherlock []SiteEntry) []SiteEntry {
-	// Deduplicate by domain, preferring WhatsMyName when there's overlap.
-	byDomain := make(map[string]SiteEntry)
-	for _, site := range wmn {
-		byDomain[site.Domain] = site
-	}
-	for _, site := range sherlock {
-		if existing, found := byDomain[site.Domain]; found {
-			// Mark as coming from both sources.
-			existing.Source = "both"
-			byDomain[site.Domain] = existing
-		} else {
-			byDomain[site.Domain] = site
+func dedupeByDomain(sites []SiteEntry) []SiteEntry {
+	sort.Slice(sites, func(i, j int) bool { return sites[i].Domain < sites[j].Domain })
+	seen := map[string]bool{}
+	var out []SiteEntry
+	for _, s := range sites {
+		if seen[s.Domain] {
+			continue
 		}
+		seen[s.Domain] = true
+		out = append(out, s)
 	}
-
-	var result []SiteEntry
-	for _, site := range byDomain {
-		result = append(result, site)
-	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Domain < result[j].Domain
-	})
-	return result
+	return out
 }
 
-func filterNSFW(sites []SiteEntry) []SiteEntry {
-	// Already filtered during load, but double-check domain patterns.
-	var filtered []SiteEntry
-	nsfwPatterns := []string{"onlyfans", "admireme", "allthingsworn", "fansly"}
-	for _, site := range sites {
-		nsfw := false
-		for _, pattern := range nsfwPatterns {
-			if strings.Contains(strings.ToLower(site.Domain), pattern) {
-				nsfw = true
-				break
-			}
-		}
-		if !nsfw {
-			filtered = append(filtered, site)
-		}
-	}
-	return filtered
-}
-
-func convertToDorks(sites []SiteEntry) []DorkTemplate {
+// convertToDorks turns a Sherlock profile check into a `site:` search dork.
+// A direct profile URL (https://site/user/jane) is not itself a query a search
+// provider can run, so it is converted to a site-scoped expression with an
+// inurl prefix when the profile path carries the placeholder.
+func convertToDorks(sites []SiteEntry) ([]DorkTemplate, error) {
 	var templates []DorkTemplate
 	for _, site := range sites {
+		query, err := searchDorkFor(site.URL)
+		if err != nil {
+			fmt.Printf("skipping %q (%s): %v\n", site.Name, site.Domain, err)
+			continue
+		}
 		id := "username." + sanitizeID(site.Domain)
 		templates = append(templates, DorkTemplate{
 			ID:          id,
 			Category:    "username",
-			Name:        site.Name + " profile check",
-			Description: fmt.Sprintf("Direct profile URL check for %s", site.Name),
-			Query:       site.URL,
-			Tags:        []string{"direct-check", "profile"},
+			Name:        site.Name + " username search",
+			Description: fmt.Sprintf("Search-engine dork for %s profile pages of {target}", site.Name),
+			Query:       query,
+			Tags:        []string{"search-dork", "profile", "username"},
 		})
 	}
-	return templates
+	// The catalogue must stay deterministic: sort by (category, id).
+	sort.Slice(templates, func(i, j int) bool { return templates[i].ID < templates[j].ID })
+	return templates, nil
+}
+
+// searchDorkFor converts a Sherlock profile URL into a search expression that
+// keeps {target} so the dork validator and renderer both accept it.
+func searchDorkFor(profile string) (string, error) {
+	u, err := url.Parse(profile)
+	if err != nil {
+		return "", fmt.Errorf("unparsable URL: %v", err)
+	}
+	switch strings.ToLower(u.Scheme) {
+	case "http", "https":
+	default:
+		return "", fmt.Errorf("non-http scheme %q", u.Scheme)
+	}
+	host := strings.ToLower(u.Hostname())
+	host = strings.TrimPrefix(host, "www.")
+	if host == "" {
+		return "", fmt.Errorf("empty host")
+	}
+
+	// A placeholder in the host (user.tumblr.com style) scopes the whole site.
+	if strings.Contains(host, "{target}") {
+		return "site:" + host, nil
+	}
+
+	// A placeholder in the path gives a precise inurl prefix.
+	if idx := strings.Index(u.Path, "{target}"); idx >= 0 {
+		prefix := u.Path[:idx+len("{target}")]
+		return `site:` + host + ` inurl:"` + prefix + `"`, nil
+	}
+
+	// Otherwise the profile URL parametrises the target in its query string or
+	// directly at the root; a bare site-scoped term search still works.
+	return `site:` + host + ` "{target}"`, nil
 }
 
 func generateInfraDorks() map[string][]DorkTemplate {
@@ -473,16 +409,6 @@ func writePlaceholderHumanFiles(baseDir string) error {
 	return nil
 }
 
-func filterByCategory(templates []DorkTemplate, category string) []DorkTemplate {
-	var filtered []DorkTemplate
-	for _, t := range templates {
-		if t.Category == category {
-			filtered = append(filtered, t)
-		}
-	}
-	return filtered
-}
-
 func writeYAML(path string, templates []DorkTemplate) error {
 	data, err := yaml.Marshal(templates)
 	if err != nil {
@@ -500,7 +426,6 @@ func extractDomain(urlStr string) string {
 		return ""
 	}
 	host := u.Hostname()
-	// Strip www. prefix for deduplication.
 	host = strings.TrimPrefix(host, "www.")
 	return host
 }
@@ -508,7 +433,6 @@ func extractDomain(urlStr string) string {
 var idSanitizeRE = regexp.MustCompile(`[^a-z0-9._-]+`)
 
 func sanitizeID(domain string) string {
-	// Convert domain to a valid dork ID: lowercase, replace invalid chars with hyphen.
 	id := strings.ToLower(domain)
 	id = strings.ReplaceAll(id, ".", "-")
 	id = idSanitizeRE.ReplaceAllString(id, "-")

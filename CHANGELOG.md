@@ -9,13 +9,18 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- **Human-centric OSINT dork templates** — 876 username enumeration templates
-  derived from WhatsMyName (CC BY-SA 4.0) and Sherlock (MIT) projects,
-  covering 900+ social platforms and web services. New dork categories:
+- **Human-centric OSINT dork templates** — 430 username enumeration search
+  dorks derived from the Sherlock project (MIT licensed), covering 400+ social
+  platforms and web services. New dork categories:
   `username`, `name`, `email`, `employer` (human-focused) plus `exposed-docs`,
   `login-panels`, `subdomains` (infrastructure-focused). Templates embedded at
   build time in `internal/search/dorks/human/` and `internal/search/dorks/infra/`
   subdirectories.
+- **Username dorks are search expressions, not profile URLs** — each Sherlock
+  profile check is converted to a `site:`/`inurl:` dork so every template is a
+  query a search provider can execute. Direct profile-URL checks and
+  WhatsMyName-derived data are intentionally not shipped (share-alike
+  licensing), so nothing is claimed that the provider path cannot actually run.
 - **Custom wordlist support** — config keys `sources.search.custom_wordlist_path`
   (path to custom YAML file) and `sources.search.builtin_enabled` (default true).
   Custom templates merge with built-in catalog, or replace it entirely when
@@ -25,21 +30,21 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   and `TargetOrganization` in addition to `TargetDomain`. Source outputs include
   `NodeUsername`, `NodeEmail`, and `NodeSocialAccount` entity types for
   human-centric reconnaissance.
-- **Data attribution** — NOTICE file documents data sources (WhatsMyName,
-  Sherlock) with license terms and transformation process. Original data parsed,
-  merged, deduplicated by domain, and converted to Nzinga schema. No upstream
+- **Data attribution** — NOTICE file documents the Sherlock data source (MIT)
+  with license terms and transformation process. Data is deduplicated by
+  domain, filtered for NSFW sites, and converted to search dorks. No upstream
   application code or license files vendored.
 - **Transformation script** — `scripts/transform-dorks.go` one-time tool to
-  parse external JSON data (WhatsMyName `wmn-data.json`, Sherlock `data.json`)
-  and emit Nzinga YAML templates. Script filters NSFW sites, validates
-  placeholders, and generates human/infra category files.
+  parse Sherlock `data.json` and emit Nzinga YAML templates. Script filters
+  NSFW sites, converts profile URLs to `site:` dorks, validates placeholders,
+  and generates human/infra category files.
 
 ### Changed
 
 - **Dork loading** — `internal/search/dork.go` now recursively loads YAML files
   from subdirectories via `walkDir` function. `go:embed` directive updated to
   include `dorks/human/*.yaml` and `dorks/infra/*.yaml`. Total embedded
-  templates: 900+ across 12 categories (5 original + 7 new).
+  templates: 477 across 12 categories (5 original + 7 new).
 - **Unified version system** — `internal/version` identity now also carries
   official QYVORA contact details (website, support, location), surfaced by
   `nzinga version` in terminal and machine formats.
@@ -60,7 +65,7 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
-- **Search engine dorking** — expanded from 30 to 900+ dork templates across
+- **Search engine dorking** — expanded from 30 to 477 dork templates across
   12 YAML category files (original: general, documents, social, technology,
   exposed-services; new: username, name, email, employer, exposed-docs,
   login-panels, subdomains). The CLI `dork` command and console `dork`/`dorks`
