@@ -11,6 +11,10 @@ targets; the type selects which sources run and which capabilities apply.
 | `ip` | `ip:` | `203.0.113.10` | simulation |
 | `infrastructure` | `infrastructure:` | `203.0.113.0/24` | crt.sh, DNS, WHOIS, GitHub, simulation |
 
+The opt-in `search` (dorking) source additionally accepts three of these
+target types: `domain`, `username`, and `organization` (see `docs/Sources.md`).
+It runs against them only when `sources.search.enabled` is set.
+
 A bare value (no `type:`) is typed by the shared target resolver — a
 registered domain resolves to `domain`, anything IPv4/range resolves to
 `ip`/`infrastructure`, otherwise it is treated as a username/organization

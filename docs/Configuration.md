@@ -90,6 +90,30 @@ Each source has `enabled`; disabled sources never run.
 > key delimiter. Its config key intentionally uses an underscore:
 > `sources.crt_sh.enabled` (the canonical id remains `crt.sh`).
 
+### Search / dorking
+
+The `search` source is opt-in (`enabled` defaults to `false`); it never runs
+in a default collection pass. `search.*` keys configure the provider that
+executes dork queries.
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `sources.search.enabled` | `false` | opt-in dorking source |
+| `sources.search.max_queries` | `25` | cap on queries executed per run |
+| `sources.search.categories` | `` | comma-separated dork categories (empty = all built-in categories) |
+| `sources.search.custom_wordlist_path` | `` | custom dork template YAML, merged with the built-in catalogue or replacing it when `builtin_enabled=false` |
+| `sources.search.builtin_enabled` | `true` | load the embedded dork catalogue |
+| `search.provider` | `` | search provider (`simulation` or `api`) |
+| `search.endpoint` | `` | API provider base URL |
+| `search.token` | `` | API provider bearer token |
+| `search.method` | `GET` | API provider HTTP method (`GET` or `POST`) |
+| `search.query_param` | `query` | API provider GET query parameter carrying the dork |
+
+Custom wordlist files are validated against the DorkTemplate schema on load,
+and duplicate template IDs with built-in templates are rejected. Enabling the
+source with no `search.provider` yields an explicit configuration error unless
+`simulation` is used.
+
 ## Example
 
 ```yaml

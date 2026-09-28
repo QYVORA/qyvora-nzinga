@@ -49,6 +49,25 @@ Run only the DISCOVER stage: resolve and validate the target, then persist a
 discover-only session. Shares the pipeline's discovery implementation, so a
 validated target from `discover` behaves identically in a full `assess`.
 
+### `dork <domain>` (alias `dorking`)
+
+Run the full pipeline with the opt-in search source enabled against exactly one
+domain. Requires an authorized target like other collection commands.
+
+| Flag | Meaning |
+|------|---------|
+| `--provider <simulation\|api>` | provider override (default: config `search.provider`) |
+| `--category <list>` | comma-separated dork categories |
+| `--max-queries <n>` | cap on queries (default: config `sources.search.max_queries`) |
+
+### `dorks list` / `dorks show <category|target>`
+
+Introspect the embedded dork template catalogue.
+
+- `dorks list` — list templates grouped by category.
+- `dorks show <category|target>` — show one category's templates, or the
+  rendered queries for a target value (a dry-run of the catalogue).
+
 ### `relationship`
 
 Inspect the intelligence relationship graph of the latest session.

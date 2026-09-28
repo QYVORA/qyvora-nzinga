@@ -17,6 +17,7 @@ Source ids that contain dots (e.g. `crt.sh`) map to underscore config keys
 | `crt.sh` | crt.sh Certificate Transparency | certificate | `certificate.enumerate`, `subdomain.enumerate` |
 | `dns` | DNS | dns | `dns.resolve` |
 | `github` | GitHub public API | code | `username.lookup`, `repository.enumerate` |
+| `search` | Search-engine dorking | search | `search.dork` |
 | `whois` | WHOIS registry | registry | `whois.lookup` |
 | `simulation` | Offline simulation dataset | simulation | `domain.enumerate`, `subdomain.enumerate`, `dns.resolve`, `whois.lookup`, `certificate.enumerate`, `username.lookup`, `repository.enumerate`, `email.enumerate` |
 
@@ -35,9 +36,37 @@ remote state (see `docs/Security-Model.md`).
 - **github** (`github.go`) — username/platform lookups and repository
   enumeration via the GitHub public API. Optional token in
   `sources.github.token`.
+- **search** (`search.go`) — **opt-in** dorking source; `sources.search.enabled`
+  defaults to `false`, so it never runs in a default collection pass. It
+  executes curated query templates from the embedded dork catalogue against a
+  provider and emits `NodeUsername`, `NodeEmail`, and `NodeSocialAccount`
+  observations. It accepts `TargetDomain`, `TargetUsername`, and
+  `TargetOrganization` targets, and, like other live sources, requires an
+  authorized target. It needs a sanctioned provider: `search.provider` = `api`
+  (with `search.endpoint`) or `simulation` (the only provider that needs no
+  endpoint). Enabling the source with no provider configured yields an explicit
+  configuration error. Search hits are unverified index references and are
+  always recorded `StateInferred`/`ConfidencePossible` — never as confirmed
+  facts. The framework never bypasses CAPTCHA or anti-automation controls: a
+  challenged surface or an HTTP 429 response is reported as a typed
+  blocked/rate-limit notice, and results are never fabricated.
 - **simulation** (`simulate.go`) — the offline dataset. Never touches the
   network, requires no authorization, and covers `example.com`,
   `example.net`, and `example.org`.
+
+## Dork catalogue
+
+The embedded catalogue holds exactly 477 templates across 12 categories:
+human-focused (username, name, email, employer), infrastructure
+(exposed-services, exposed-docs, login-panels, subdomains), and the original
+general, documents, social, and technology. The username category's 430
+templates are search expressions (`site:<host>` / `inurl:` queries) derived
+exclusively from the MIT-licensed Sherlock project data; they are not profile
+URLs. Every template contains a `{target}` placeholder and is validated at
+load. A custom wordlist (`sources.search.custom_wordlist_path`) merges with
+this catalogue, or replaces it when `sources.search.builtin_enabled=false`;
+custom templates are validated against the DorkTemplate schema on load and
+duplicate IDs with built-in templates are rejected.
 
 ## Offline simulation dataset
 
