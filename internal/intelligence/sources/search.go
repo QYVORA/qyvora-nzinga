@@ -79,11 +79,11 @@ func (s *Search) Describe() models.Source {
 		Description:  "Curated dork templates executed against a configurable, authorized search provider",
 		Category:     models.CategorySearch,
 		Capabilities: s.Capabilities(),
-		Output:       []models.NodeKind{models.NodeHostname},
+		Output:       []models.NodeKind{models.NodeHostname, models.NodeUsername, models.NodeEmail, models.NodeSocialAccount},
 		Risk:         models.RiskS1,
 		AuthRequired: true,
 		Public:       true,
-		Targets:      []models.TargetType{models.TargetDomain},
+		Targets:      []models.TargetType{models.TargetDomain, models.TargetUsername, models.TargetOrganization},
 		RateLimit:    "bounded by collection.rate_limit_per_second and sources.search.max_queries",
 		Notes:        "Search hits are unverified index snippets, never confirmed facts. Blocked surfaces are reported, never bypassed.",
 	}
@@ -97,8 +97,12 @@ func (s *Search) Collect(ctx context.Context, t *models.Target) ([]*models.Obser
 	if t == nil {
 		return nil, errors.New("target is nil")
 	}
-	if t.Type != models.TargetDomain {
-		return nil, fmt.Errorf("search dorking supports domain targets, got %q", t.Type)
+	// Support Domain, Username, and Organization targets.
+	switch t.Type {
+	case models.TargetDomain, models.TargetUsername, models.TargetOrganization:
+		// Allowed target types - continue
+	default:
+		return nil, fmt.Errorf("search dorking supports domain/username/organization targets, got %q", t.Type)
 	}
 	provider, err := s.liveProvider()
 	if err != nil {
@@ -114,12 +118,10 @@ func (s *Search) Simulate(ctx context.Context, t *models.Target) ([]*models.Obse
 		return nil, errors.New("target is nil")
 	}
 	switch t.Type {
-	case models.TargetDomain:
-		return s.run(ctx, &search.SimulationProvider{}, t, t.Value)
-	case models.TargetUsername:
+	case models.TargetDomain, models.TargetUsername, models.TargetOrganization:
 		return s.run(ctx, &search.SimulationProvider{}, t, t.Value)
 	default:
-		return nil, fmt.Errorf("search dorking supports domain targets, got %q", t.Type)
+		return nil, fmt.Errorf("search dorking supports domain/username/organization targets, got %q", t.Type)
 	}
 }
 
