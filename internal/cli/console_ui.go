@@ -69,7 +69,7 @@ func (u *consoleUI) Banner(title string) {
 func (u *consoleUI) BannerFoot(version string) {
 	u.KV("framework", "nzinga")
 	u.KV("version", version)
-	u.KV("docs", "https://qyvora.dev/docs/nzinga")
+	u.KV("docs", "https://qyvora.org/docs/nzinga")
 }
 
 // HUD renders the always-on status line.
