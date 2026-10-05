@@ -56,10 +56,18 @@ func (u *consoleUI) Prompt(name string) string {
 	return u.paint(name, ansiBold+ansiAmber) + u.paint(" > ", ansiBold+ansiWhite)
 }
 
-// Banner prints the brand ASCII banner centered.
+// Banner prints the brand ASCII banner in the QYVORA accent.
+//
+// The colour comes from banner.Colorize, which is the single place the accent
+// is defined, but the console's own colour decision still wins: when colours
+// are off the plain art is printed even on a terminal that could show it, so
+// NO_COLOR is honoured by this surface too.
 func (u *consoleUI) Banner(title string) {
 	for _, line := range strings.Split(strings.TrimRight(banner.Art, "\n"), "\n") {
-		u.outline(line)
+		if u.color {
+			line = banner.Colorize(line)
+		}
+		_, _ = fmt.Fprintln(u.out, line)
 	}
 	_, _ = fmt.Fprintln(u.out)
 	u.Section(title)
@@ -173,10 +181,9 @@ func (u *consoleUI) Rule() {
 	_, _ = fmt.Fprintln(u.out)
 }
 
-// outline prints a banner line with the amber accent, honoring NO_COLOR.
-func (u *consoleUI) outline(line string) {
-	_, _ = fmt.Fprintln(u.out, u.Amber(line))
-}
+// outline is gone. It printed a banner row in the amber accent, which was this
+// console's prompt and heading colour rather than the QYVORA banner accent; the
+// banner now draws through banner.Colorize so one definition covers it.
 
 // runeWidth counts the display width of s, stripping ANSI codes first and
 // counting wide (CJK/emoji) characters as two columns.
