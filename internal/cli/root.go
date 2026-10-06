@@ -23,6 +23,7 @@ import (
 )
 
 var app = newAppState()
+var updateFlag bool
 
 const appDescription = `nzinga is a terminal-first intelligence collection and OSINT framework for
 authorized reconnaissance: collect from public sources, correlate entities
@@ -98,6 +99,15 @@ func ExecuteArgs(args []string) int {
 func ExecuteArgsContext(ctx context.Context, args []string) int {
 	rootCmd.SetArgs(args)
 
+	// If --update is passed, route to the update subcommand regardless of
+	// other positional arguments.
+	for _, a := range args {
+		if a == "--update" || a == "-update" || a == "--update=true" {
+			rootCmd.SetArgs([]string{"update"})
+			break
+		}
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		var exitErr *errs.ExitError
 		if errors.As(err, &exitErr) {
@@ -137,7 +147,8 @@ func init() {
 	})
 
 	pf := rootCmd.PersistentFlags()
-	pf.StringVarP(&app.cfgFile, "config", "c", "", "config file (default $HOME/.config/qyvora/nzinga/config.yaml)")
+	pf.BoolVar(&updateFlag, "update", false, "update the CLI to the latest official release")
+	pf.StringVarP(&app.cfgFile, "config", "c", "", "config file (default $HOME/.config/qyvora/nzinga/config.yaml")
 	pf.BoolVarP(&app.verbose, "verbose", "v", false, "verbose output")
 	pf.BoolVarP(&app.quiet, "quiet", "q", false, "suppress non-error output")
 	pf.StringVarP(&app.outputFmt, "output", "o", "", "output format: terminal, json, markdown, html, yaml")
@@ -145,7 +156,7 @@ func init() {
 	pf.StringVar(&app.eventsF, "events", "", "emit a JSONL event stream to stdout, stderr, or a file path")
 	pf.BoolVar(&app.dryRun, "dry-run", false, "resolve and print the collection plan without executing")
 
-	rootCmd.PersistentFlags().BoolP("authorized", "y", false, "confirm authorization scope non-interactively")
+	pf.BoolP("authorized", "y", false, "confirm authorization scope non-interactively")
 
 	registerTargetFlags(pf)
 
