@@ -26,6 +26,7 @@ type OperationMetadata struct {
 	Description  string           `json:"description"`
 	Class        Class            `json:"class"`
 	Risk         models.RiskLevel `json:"risk"`
+	NoiseLevel   models.NoiseLevel `json:"noise_level"` // OPSEC footprint
 	TargetType   string           `json:"target_type"`
 	AuthRequired bool             `json:"authorization_required"`
 	Confirm      bool             `json:"confirmation_required"`
@@ -38,31 +39,31 @@ var (
 	OpCertEnumerate = OperationMetadata{
 		ID: "nzinga.certificate.enumerate", Name: "certificate transparency enumeration",
 		Description: "Query a certificate transparency log for certificates matching a domain.",
-		Class:       ClassDiscovery, Risk: models.RiskS1, TargetType: "domain",
+		Class:       ClassDiscovery, Risk: models.RiskS1, NoiseLevel: models.NoiseLevelPassive, TargetType: "domain",
 		AuthRequired: true, Confirm: false, ChangesState: false, Reversible: true,
 	}
 	OpDNSResolve = OperationMetadata{
 		ID: "nzinga.dns.resolve", Name: "dns resolution",
 		Description: "Resolve DNS records for discovered hostnames.",
-		Class:       ClassDiscovery, Risk: models.RiskS1, TargetType: "domain",
+		Class:       ClassDiscovery, Risk: models.RiskS1, NoiseLevel: models.NoiseLevelLow, TargetType: "domain",
 		AuthRequired: true, Confirm: false, ChangesState: false, Reversible: true,
 	}
 	OpWhoisLookup = OperationMetadata{
 		ID: "nzinga.whois.lookup", Name: "whois lookup",
 		Description: "Query registry WHOIS metadata for a domain.",
-		Class:       ClassDiscovery, Risk: models.RiskS1, TargetType: "domain",
+		Class:       ClassDiscovery, Risk: models.RiskS1, NoiseLevel: models.NoiseLevelLow, TargetType: "domain",
 		AuthRequired: true, Confirm: false, ChangesState: false, Reversible: true,
 	}
 	OpUsernameEnumerate = OperationMetadata{
 		ID: "nzinga.username.enumerate", Name: "username enumeration",
 		Description: "Look up a username across public platforms.",
-		Class:       ClassDiscovery, Risk: models.RiskS1, TargetType: "username",
+		Class:       ClassDiscovery, Risk: models.RiskS1, NoiseLevel: models.NoiseLevelLow, TargetType: "username",
 		AuthRequired: true, Confirm: false, ChangesState: false, Reversible: true,
 	}
 	OpAnalyze = OperationMetadata{
 		ID: "nzinga.analyze", Name: "correlation and analysis",
 		Description: "Correlate observations into claims and rule findings.",
-		Class:       ClassAnalysis, Risk: models.RiskS1, TargetType: "any",
+		Class:       ClassAnalysis, Risk: models.RiskS1, NoiseLevel: models.NoiseLevelPassive, TargetType: "any",
 		AuthRequired: true, Confirm: false, ChangesState: false, Reversible: true,
 	}
 )
