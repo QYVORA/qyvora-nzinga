@@ -26,6 +26,7 @@ type Source struct {
 	Capabilities []Capability   `json:"capabilities"`
 	Output       []NodeKind     `json:"output,omitempty"` // entity kinds it produces
 	Risk         RiskLevel      `json:"risk"`
+	NoiseLevel   NoiseLevel     `json:"noise_level,omitempty"` // OPSEC footprint
 	AuthRequired bool           `json:"auth_required"` // requires authorization gate
 	Public       bool           `json:"public"`        // is a real public source (vs simulation)
 	Targets      []TargetType   `json:"targets,omitempty"`

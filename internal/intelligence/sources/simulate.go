@@ -51,6 +51,7 @@ func (s *simulation) Describe() models.Source {
 			models.NodeEmail, models.NodeUsername, models.NodeRepository,
 			models.NodeCertificate, models.NodeOrganization},
 		Risk:         models.RiskS1,
+		NoiseLevel:   models.NoiseLevelPassive,
 		AuthRequired: false,
 		Public:       false,
 		Targets: []models.TargetType{models.TargetDomain, models.TargetOrganization,

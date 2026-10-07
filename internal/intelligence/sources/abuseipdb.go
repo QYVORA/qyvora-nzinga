@@ -48,6 +48,7 @@ func (a *AbuseIPDB) Describe() models.Source {
 		Capabilities: a.Capabilities(),
 		Output:       []models.NodeKind{models.NodeIP},
 		Risk:         models.RiskS2,
+		NoiseLevel:   models.NoiseLevelLow,
 		AuthRequired: true,
 		Public:       true,
 		Targets:      []models.TargetType{models.TargetIP},

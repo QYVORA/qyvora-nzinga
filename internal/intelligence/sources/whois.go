@@ -49,6 +49,7 @@ func (w *Whois) Describe() models.Source {
 		Capabilities: w.Capabilities(),
 		Output:       []models.NodeKind{models.NodeOrganization, models.NodeEmail},
 		Risk:         models.RiskS1,
+		NoiseLevel:   models.NoiseLevelLow,
 		AuthRequired: true,
 		Public:       true,
 		Targets:      []models.TargetType{models.TargetDomain},

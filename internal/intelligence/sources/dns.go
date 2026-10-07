@@ -39,6 +39,7 @@ func (d *DNS) Describe() models.Source {
 		Capabilities: d.Capabilities(),
 		Output:       []models.NodeKind{models.NodeHostname, models.NodeIP},
 		Risk:         models.RiskS1,
+		NoiseLevel:   models.NoiseLevelLow,
 		AuthRequired: true,
 		Public:       true,
 		Targets:      []models.TargetType{models.TargetDomain, models.TargetInfrastructure},

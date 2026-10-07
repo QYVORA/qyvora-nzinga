@@ -44,6 +44,7 @@ func (c *crtSh) Describe() models.Source {
 		Capabilities: c.Capabilities(),
 		Output:       []models.NodeKind{models.NodeCertificate, models.NodeHostname, models.NodeEmail},
 		Risk:         models.RiskS1,
+		NoiseLevel:   models.NoiseLevelPassive,
 		AuthRequired: true,
 		Public:       true,
 		Targets:      []models.TargetType{models.TargetDomain, models.TargetInfrastructure},

@@ -81,6 +81,7 @@ func (s *Search) Describe() models.Source {
 		Capabilities: s.Capabilities(),
 		Output:       []models.NodeKind{models.NodeHostname, models.NodeUsername, models.NodeEmail, models.NodeSocialAccount},
 		Risk:         models.RiskS1,
+		NoiseLevel:   models.NoiseLevelLow,
 		AuthRequired: true,
 		Public:       true,
 		Targets:      []models.TargetType{models.TargetDomain, models.TargetUsername, models.TargetOrganization},

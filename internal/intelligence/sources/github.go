@@ -46,6 +46,7 @@ func (g *GitHub) Describe() models.Source {
 		Capabilities: g.Capabilities(),
 		Output:       []models.NodeKind{models.NodeUsername, models.NodeSocialAccount, models.NodeRepository, models.NodeEmail},
 		Risk:         models.RiskS1,
+		NoiseLevel:   models.NoiseLevelLow,
 		AuthRequired: true,
 		Public:       true,
 		Targets:      []models.TargetType{models.TargetUsername, models.TargetOrganization},

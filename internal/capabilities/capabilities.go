@@ -46,6 +46,7 @@ type Tool struct {
 	Category     string            `json:"category"`
 	Output       []string          `json:"output,omitempty"`
 	Risk         models.RiskLevel  `json:"risk"`
+	NoiseLevel   models.NoiseLevel `json:"noise_level,omitempty"`
 	AuthRequired bool              `json:"authorization_required"`
 	Confirm      bool              `json:"confirmation_required"`
 	Reversible   bool              `json:"reversible"`
@@ -76,6 +77,7 @@ func Catalog(sources []models.Source, rules []*rules.Rule) []Tool {
 				Category:     string(s.Category),
 				Output:       outputKinds(s.Output),
 				Risk:         s.Risk,
+				NoiseLevel:   s.NoiseLevel,
 				AuthRequired: s.AuthRequired,
 				Confirm:      false,
 				Reversible:   true,
