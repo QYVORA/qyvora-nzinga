@@ -21,17 +21,17 @@ const (
 // OperationMetadata describes one operation's safety contract. Every nzinga
 // source operation is read-only, reversible, and never changes remote state.
 type OperationMetadata struct {
-	ID           string           `json:"id"`
-	Name         string           `json:"name"`
-	Description  string           `json:"description"`
-	Class        Class            `json:"class"`
-	Risk         models.RiskLevel `json:"risk"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	Description  string            `json:"description"`
+	Class        Class             `json:"class"`
+	Risk         models.RiskLevel  `json:"risk"`
 	NoiseLevel   models.NoiseLevel `json:"noise_level"` // OPSEC footprint
-	TargetType   string           `json:"target_type"`
-	AuthRequired bool             `json:"authorization_required"`
-	Confirm      bool             `json:"confirmation_required"`
-	ChangesState bool             `json:"changes_state"`
-	Reversible   bool             `json:"reversible"`
+	TargetType   string            `json:"target_type"`
+	AuthRequired bool              `json:"authorization_required"`
+	Confirm      bool              `json:"confirmation_required"`
+	ChangesState bool              `json:"changes_state"`
+	Reversible   bool              `json:"reversible"`
 }
 
 // Known operations. All are read-only and reversible.

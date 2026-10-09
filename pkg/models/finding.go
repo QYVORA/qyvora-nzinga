@@ -45,7 +45,7 @@ type Finding struct {
 	Confidence     Confidence        `json:"confidence"`
 	Status         FindingStatus     `json:"status"`
 	State          State             `json:"state"`
-	Tier           Tier              `json:"tier,omitempty"` // Capability tier that generated this finding
+	Tier           Tier              `json:"tier,omitempty"`    // Capability tier that generated this finding
 	Objects        []string          `json:"objects,omitempty"` // affected entity identifiers
 	Evidence       []Evidence        `json:"evidence,omitempty"`
 	Attributes     map[string]string `json:"attributes,omitempty"`
