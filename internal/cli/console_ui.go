@@ -63,7 +63,7 @@ func (u *consoleUI) Prompt(name string) string {
 // are off the plain art is printed even on a terminal that could show it, so
 // NO_COLOR is honoured by this surface too.
 func (u *consoleUI) Banner(title string) {
-	for _, line := range strings.Split(strings.TrimRight(banner.Art, "\n"), "\n") {
+	for _, line := range banner.RenderCLI() {
 		if u.color {
 			line = banner.Colorize(line)
 		}

@@ -63,6 +63,7 @@ func runTUI(root *cobra.Command, ctx context.Context) error {
 	code, err := tui.Run(tui.Config{
 		Title:   "QYVORA / NZINGA",
 		Version: version.String(),
+		Banner:  tui.ToolBanner("NZINGA", "Authorized Open-Source Intelligence Framework"),
 		Runner:  runner,
 		Out:     os.Stdout,
 		// The tool's own progress output is discarded rather than shown: it
