@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/QYVORA/qyvora-nzinga/internal/banner"
+	"github.com/QYVORA/qyvora-tui"
 )
 
 // amber is the brand accent (QYVORA Brand Amber 255,176,0).
@@ -63,6 +64,9 @@ func (u *consoleUI) Prompt(name string) string {
 // are off the plain art is printed even on a terminal that could show it, so
 // NO_COLOR is honoured by this surface too.
 func (u *consoleUI) Banner(title string) {
+	if tui.InTUISession() {
+		return
+	}
 	for _, line := range banner.RenderCLI() {
 		if u.color {
 			line = banner.Colorize(line)
@@ -75,6 +79,9 @@ func (u *consoleUI) Banner(title string) {
 
 // BannerFoot prints the version line under the banner.
 func (u *consoleUI) BannerFoot(version string) {
+	if tui.InTUISession() {
+		return
+	}
 	u.KV("framework", "nzinga")
 	u.KV("version", version)
 	u.KV("docs", "https://qyvora.org/docs/nzinga")
