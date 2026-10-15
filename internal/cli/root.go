@@ -30,7 +30,7 @@ authorized reconnaissance: collect from public sources, correlate entities
 into claims, evaluate detections, and produce evidence-driven reports.
 
 Usage modes:
-  nzinga                                 start the interactive console
+  nzinga                                 print this help (one-shot CLI)
   nzinga assess --sim                    full pipeline against the offline demo dataset
   nzinga assess --target example.com     full pipeline against an authorized live target
   nzinga domain|organization|username|infrastructure <name>
