@@ -29,19 +29,11 @@ const appDescription = `nzinga is a terminal-first intelligence collection and O
 authorized reconnaissance: collect from public sources, correlate entities
 into claims, evaluate detections, and produce evidence-driven reports.
 
-Usage modes:
-  nzinga                                 print this help (one-shot CLI)
-  nzinga assess --sim                    full pipeline against the offline demo dataset
-  nzinga assess --target example.com     full pipeline against an authorized live target
-  nzinga domain|organization|username|infrastructure <name>
-                                         run the target-specific collection pipeline
-  nzinga dork <domain>                   search-engine dorking over a domain (opt-in)
-  nzinga sources list|show               list intelligence sources
-  nzinga findings|evidence|graph         inspect the latest session
-  nzinga report                          render the latest assessment report
-  nzinga target set|list|show            manage targets
-  nzinga capabilities                    list the machine-readable tool contract
-  nzinga updates                         check for and install updates
+Commands follow the shared tier grammar
+<tool> <tier> <module> [<action>] [target] [flags], where the tier is one of
+recon, exploit, or report. Run it with no arguments to print this help;
+collection is one-shot, e.g. nzinga recon assess --sim,
+nzinga recon collect domain example.com, nzinga report graph.
 
 Live collection requires explicit target authorization (-y/--authorized or
 QYVORA_AUTHORIZED=true). nzinga is scoped, reversible and intended for use
@@ -54,6 +46,13 @@ var rootCmd = &cobra.Command{
 	Version:       version.String(),
 	SilenceUsage:  true,
 	SilenceErrors: true,
+	Example: `  nzinga recon assess --sim
+  nzinga recon collect domain example.com
+  nzinga recon sources list
+  nzinga recon dork example.com
+  nzinga report graph
+  nzinga report findings
+  nzinga report --format markdown`,
 	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		if app.initErr != nil {
 			return errs.NewExitError(2, app.initErr.Error())
@@ -156,25 +155,76 @@ func init() {
 
 	registerTargetFlags(pf)
 
-	rootCmd.AddCommand(newVersionCmd())
-	rootCmd.AddCommand(newCapabilitiesCmd())
-	rootCmd.AddCommand(newCompletionCmd())
-	rootCmd.AddCommand(newUpdatesCmd())
-	rootCmd.AddCommand(newTargetCmd())
-	rootCmd.AddCommand(newAssessCmd())
-	rootCmd.AddCommand(newDiscoverCmd())
-	rootCmd.AddCommand(newCollectCmd())
-	rootCmd.AddCommand(newFindingsCmd())
-	rootCmd.AddCommand(newEvidenceCmd())
-	rootCmd.AddCommand(newGraphCmd())
-	rootCmd.AddCommand(newRelationshipCmd())
-	rootCmd.AddCommand(newAnalyzeCmd())
-	rootCmd.AddCommand(newReportCmd())
-	rootCmd.AddCommand(newSourcesCmd())
-	rootCmd.AddCommand(newDorkCmd())
-	rootCmd.AddCommand(newDorksCmd())
+	// Flat utility commands, identical in shape across all 14 tools.
+	rootCmd.AddCommand(newVersionCmd(), newCapabilitiesCmd(), newCompletionCmd(), newUpdatesCmd())
+
+	// Tier grammar: <tool> <tier> <module> [<action>] [target] [flags].
+	// nzinga's collection, source-catalog and rule-analysis work is recon-tier;
+	// it has no active-testing or exploitation surface, so the exploit tier is
+	// an explicit empty note; findings, evidence, relationships and the report
+	// render surface are report-tier. The tier parents always exist so the
+	// command shape is uniform across tools.
+	recon := &cobra.Command{
+		Use:   "recon",
+		Short: "Discovery, collection, source catalog and analysis modules",
+	}
+	recon.AddCommand(
+		newAssessCmd(),
+		newDiscoverCmd(),
+		newCollectCmd(),
+		newAnalyzeCmd(),
+		newTargetCmd(),
+		newSourcesCmd(),
+		newDorkCmd(),
+		newDorksCmd(),
+	)
+
+	exploit := &cobra.Command{
+		Use:   "exploit",
+		Short: "Active-testing and exploitation modules",
+		RunE: func(*cobra.Command, []string) error {
+			return errs.NewExitError(2, "the exploit tier is empty: nzinga collects and correlates from public sources and never interacts with a target")
+		},
+	}
+
+	report := newReportCmd()
+	report.Short = "Render reports and inspect findings, evidence and relationships"
+	report.AddCommand(newFindingsCmd(), newEvidenceCmd(), newGraphCmd(), newRelationshipCmd())
+
+	rootCmd.AddCommand(recon, exploit, report)
+
+	// Backward-compatible top-level aliases: the tier form is the supported
+	// grammar, but every pre-tier invocation keeps resolving as a hidden
+	// command so existing scripts are not broken. `report` is itself a tier
+	// name, so its pre-tier form is handled by the tier. Cobra does not suggest
+	// hidden commands, so help stays clean.
+	rootCmd.AddCommand(
+		hiddenAlias("assess", newAssessCmd()),
+		hiddenAlias("discover", newDiscoverCmd()),
+		hiddenAlias("collect", newCollectCmd()),
+		hiddenAlias("analyze", newAnalyzeCmd()),
+		hiddenAlias("target", newTargetCmd()),
+		hiddenAlias("sources", newSourcesCmd()),
+		hiddenAlias("dork", newDorkCmd()),
+		hiddenAlias("dorks", newDorksCmd()),
+		hiddenAlias("findings", newFindingsCmd()),
+		hiddenAlias("evidence", newEvidenceCmd()),
+		hiddenAlias("graph", newGraphCmd()),
+		hiddenAlias("relationship", newRelationshipCmd()),
+	)
 
 	rootCmd.SetVersionTemplate(fmt.Sprintf("nzinga %s\n", version.String()))
+}
+
+// hiddenAlias registers a command under its bare name, hidden from help, so
+// the pre-tier invocation form keeps resolving. The trailing usage breadcrumb
+// (e.g. "collect domain <value>") is preserved.
+func hiddenAlias(name string, cmd *cobra.Command) *cobra.Command {
+	if old := cmd.Name(); name != old {
+		cmd.Use = name + cmd.Use[len(old):]
+	}
+	cmd.Hidden = true
+	return cmd
 }
 
 // initConfig loads configuration and initializes the shared logger, printer,
