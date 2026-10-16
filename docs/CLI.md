@@ -1,163 +1,80 @@
-# nzinga CLI Reference
+# CLI Reference
 
-Run `nzinga` with no arguments to enter the console (REPL). On a real
-terminal you get a readline console; when stdin is piped or redirected it
-degrades to a plain line reader with no banner or escape sequences.
+`nzinga` follows the shared QYVORA tier grammar:
 
-## Exit codes
+```
+nzinga <tier> <module> [<action>] [target] [flags]
+```
 
-| Code | Meaning |
-|------|---------|
-| `0`  | success |
-| `1`  | operational/run error |
-| `2`  | usage error |
-| `130`| interrupted (128 + SIGINT) |
+`<tier>` is one of `recon`, `exploit`, or `report`. Every pre-tier command remains available as a hidden alias.
 
-## Global options
+## recon
 
-`nzinga` commands accept the standard profile flags:
-
-| Flag | Meaning |
-|------|---------|
-| `--profile <quick\|standard\|deep>` | collection depth/width profile (default `standard`) |
-| `-o, --output <terminal\|...>` | output mode |
-| `--yaml`, `--json` | structured output |
-| `-v, --verbose` | verbose logging |
-| `-q, --quiet` | quiet logging |
-| `-y, --authorized` | confirm target authorization (consent gate) |
-| `--sim` | offline demo mode using the simulation dataset (auto demo-auth) |
-| `--dry-run` | print the plan and exit without collecting |
-| `--log-level <level>` | log level |
-| `--session-dir <dir>` | session store directory |
-
-See `docs/Configuration.md` for the full configuration reference; any flag maps to a
-config key.
-
-## Commands
-
-### `assess [target]`
-
-Run the full intelligence pipeline:
-`discover → collect → normalize → correlate → analyze → validate → report`.
-
-With no target uses the current saved target (`nzinga target show`). Collects
-live sources only after the authorization gate passes.
-
-### `discover [target]` (alias `find`)
-
-Run only the DISCOVER stage: resolve and validate the target, then persist a
-discover-only session. Shares the pipeline's discovery implementation, so a
-validated target from `discover` behaves identically in a full `assess`.
-
-### `dork <domain>` (alias `dorking`)
-
-Run the full pipeline with the opt-in search source enabled against exactly one
-domain. Requires an authorized target like other collection commands.
-
-| Flag | Meaning |
-|------|---------|
-| `--provider <simulation\|api>` | provider override (default: config `search.provider`) |
-| `--category <list>` | comma-separated dork categories |
-| `--max-queries <n>` | cap on queries (default: config `sources.search.max_queries`) |
-
-### `dorks list` / `dorks show <category|target>`
-
-Introspect the embedded dork template catalogue.
-
-- `dorks list` — list templates grouped by category.
-- `dorks show <category|target>` — show one category's templates, or the
-  rendered queries for a target value (a dry-run of the catalogue).
-
-### `relationship`
-
-Inspect the intelligence relationship graph of the latest session.
-
-- `relationship graph` (alias `edges`) — render nodes and edges.
-- `relationship show` — summarize relationship types and counts.
-
-### `collect <domain|organization|username|ip|infrastructure> <value>`
-
-Run collection and analysis for a specific target type:
-`nzinga collect domain example.com`.
-
-### `analyze`
-
-Re-run the rule engine and risk assessment over the latest session.
-
-### `findings`
-
-List rule findings from the latest session.
-
-### `evidence`
-
-List evidence artifacts from the latest session.
-
-### `graph`
-
-Render the relationship graph (nodes and edges) from the latest session.
-
-### `report [--format terminal|markdown|html|json|yaml] [--out <path>]`
-
-Render the structured intelligence report from the latest session.
-Supported formats: `terminal` (default), `markdown`, `html`, `json`, `yaml`.
-
-### `sources [list|show]`
-
-List intelligence sources and their capabilities, or show the complete
-source catalog (id, name, capabilities, risk, authorization required).
-
-### `target`
-
-Manage collection targets.
-
-- `target set [value]` — select and authorize the current target
-  (`nzinga target set example.com`). Refuses targets that have not passed the
-  authorization gate.
-- `target list` — list known targets.
-- `target show` — show the current target.
-
-### `capabilities`
-
-List nzinga's machine-readable tool contract (operations, rules, events,
-formats).
-
-### `updates [--install]`
-
-Check for nzinga updates (SHAKA-derived self-update flow). Bare `updates`
-checks whether a newer release is available; `--install` downloads, verifies,
-and installs the latest release.
-
-### `completion [bash|zsh|fish|powershell]`
-
-Generate a shell completion script; source it to enable tab completion.
-
-### `version`
-
-Print framework name, version, commit, build date, build user, and Go build
-info.
-
-## Console (REPL)
-
-`nzinga` with no subcommand starts a readline console when stdin is a real
-terminal; piped/redirected input runs the same commands as a plain line
-reader (no banner, no colors, no completion/history persistence). Console
-collection runs default to the offline simulation dataset.
-
-| Command | Meaning |
+| Command | Purpose |
 |---------|---------|
-| `sources`, `capabilities` / `tools` | catalog tables |
-| `use <target>` | set the console's current target |
-| `run [target]` | run the pipeline against the console target (offline demo by default) |
-| `assess [target]` | run the pipeline (offline demo by default) |
-| `discover [target]` | discover-only run |
-| `domain \| organization \| username \| ip \| infrastructure <value>` | typed collection |
-| `analyze` | findings + risk for latest session |
-| `findings` | findings table |
-| `evidence` | evidence table |
-| `graph`, `relationship` | nodes/edges and relationship summary |
-| `report` | full report render |
-| `show`, `status` | console target, profile, directory, saved target |
-| `back` | `cd ..` |
-| `target \| tgt` | target management |
-| `banner`, `version`, `history`, `cd`, `shell` | shell utilities |
-| `help`, `exit` | help and exit |
+| `nzinga recon analyze` | Re-run the rule engine and risk assessment over the latest session |
+| `nzinga recon assess` | Run the full intelligence pipeline: discover→collect→normalize→correlate→analyze→validate→report |
+| `nzinga recon capabilities` | List nzinga's machine-readable tool contract |
+| `nzinga recon collect` | Collect intelligence for a target type |
+| `nzinga recon completion` | Generate shell completion scripts |
+| `nzinga recon discover` | Run the discovery stage only: resolve and validate the target |
+| `nzinga recon dork` | Run search-engine dorking over a domain (opt-in search source) |
+| `nzinga recon dorks` | List the embedded dork query templates by category |
+| `nzinga recon evidence` | List evidence collected in the latest session |
+| `nzinga recon findings` | List findings from the latest session |
+| `nzinga recon graph` | Render the relationship graph from the latest session |
+| `nzinga recon help` | Help about any command |
+| `nzinga recon relationship` | Inspect the intelligence relationship graph of the latest session |
+| `nzinga recon report` | Render an intelligence report from the latest session |
+| `nzinga recon sources` | List intelligence sources and their capabilities |
+| `nzinga recon target` | Manage collection targets |
+| `nzinga recon tui` | start the interactive terminal application |
+| `nzinga recon updates` | Check for and install nzinga updates |
+| `nzinga recon version` | Print nzinga version and build information |
+
+## exploit
+
+| Command | Purpose |
+|---------|---------|
+| `nzinga exploit analyze` | Re-run the rule engine and risk assessment over the latest session |
+| `nzinga exploit assess` | Run the full intelligence pipeline: discover→collect→normalize→correlate→analyze→validate→report |
+| `nzinga exploit capabilities` | List nzinga's machine-readable tool contract |
+| `nzinga exploit collect` | Collect intelligence for a target type |
+| `nzinga exploit completion` | Generate shell completion scripts |
+| `nzinga exploit discover` | Run the discovery stage only: resolve and validate the target |
+| `nzinga exploit dork` | Run search-engine dorking over a domain (opt-in search source) |
+| `nzinga exploit dorks` | List the embedded dork query templates by category |
+| `nzinga exploit evidence` | List evidence collected in the latest session |
+| `nzinga exploit findings` | List findings from the latest session |
+| `nzinga exploit graph` | Render the relationship graph from the latest session |
+| `nzinga exploit help` | Help about any command |
+| `nzinga exploit relationship` | Inspect the intelligence relationship graph of the latest session |
+| `nzinga exploit report` | Render an intelligence report from the latest session |
+| `nzinga exploit sources` | List intelligence sources and their capabilities |
+| `nzinga exploit target` | Manage collection targets |
+| `nzinga exploit tui` | start the interactive terminal application |
+| `nzinga exploit updates` | Check for and install nzinga updates |
+| `nzinga exploit version` | Print nzinga version and build information |
+
+## report
+
+_No report-tier modules._
+
+## Utilities
+
+| Command | Purpose |
+|---------|---------|
+| `nzinga analyze` | Re-run the rule engine and risk assessment over the latest session |
+| `nzinga assess` | Run the full intelligence pipeline: discover→collect→normalize→correlate→analyze→validate→report |
+| `nzinga collect` | Collect intelligence for a target type |
+| `nzinga discover` | Run the discovery stage only: resolve and validate the target |
+| `nzinga dork` | Run search-engine dorking over a domain (opt-in search source) |
+| `nzinga dorks` | List the embedded dork query templates by category |
+| `nzinga evidence` | List evidence collected in the latest session |
+| `nzinga findings` | List findings from the latest session |
+| `nzinga graph` | Render the relationship graph from the latest session |
+| `nzinga relationship` | Inspect the intelligence relationship graph of the latest session |
+| `nzinga sources` | List intelligence sources and their capabilities |
+| `nzinga target` | Manage collection targets |
+| `nzinga tui` | start the interactive terminal application |
+
