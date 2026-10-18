@@ -79,8 +79,8 @@ QYVORA_MIN_GO="1.26"
 QYVORA_ICON="nzinga.png"
 QYVORA_ICO="nzinga.ico"
 QYVORA_DESKTOP_NAME="NZINGA"
-QYVORA_DESKTOP_COMMENT="Distributed reconnaissance coordination"
-QYVORA_DESKTOP_KEYWORDS="recon;osint;distributed;scan;target;campaign;coordination"
+QYVORA_DESKTOP_COMMENT="Open-source intelligence (OSINT) collection and correlation"
+QYVORA_DESKTOP_KEYWORDS="osint;intelligence;collection;correlation;public-sources;recon"
 # Ordered probes used to prove the installed binary runs
 QYVORA_VERSION_PROBE="--version version --help"
 # Additional .desktop entry, if the upstream asset ships one
