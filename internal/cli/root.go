@@ -24,6 +24,7 @@ import (
 
 var app = newAppState()
 var updateFlag bool
+var allowShellOut bool
 
 const appDescription = `nzinga is a terminal-first intelligence collection and OSINT framework for
 authorized reconnaissance: collect from public sources, correlate entities
@@ -150,13 +151,14 @@ func init() {
 	pf.BoolVar(&app.jsonOut, "json", false, "output in JSON format (shorthand for --output json)")
 	pf.StringVar(&app.eventsF, "events", "", "emit a JSONL event stream to stdout, stderr, or a file path")
 	pf.BoolVar(&app.dryRun, "dry-run", false, "resolve and print the collection plan without executing")
+	pf.BoolVar(&allowShellOut, "allow-shellout", false, "allow scripts to use exec/run.cmd shell-out (also via QYVORA_ALLOW_SHELLOUT=1)")
 
 	pf.BoolP("authorized", "y", false, "confirm authorization scope non-interactively")
 
 	registerTargetFlags(pf)
 
 	// Flat utility commands, identical in shape across all 14 tools.
-	rootCmd.AddCommand(newVersionCmd(), newCapabilitiesCmd(), newCompletionCmd(), newUpdatesCmd())
+	rootCmd.AddCommand(newVersionCmd(), newCapabilitiesCmd(), newCompletionCmd(), newUpdatesCmd(), newScriptCmd())
 
 	// Tier grammar: <tool> <tier> <module> [<action>] [target] [flags].
 	// nzinga's collection, source-catalog and rule-analysis work is recon-tier;

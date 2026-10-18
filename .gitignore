@@ -26,3 +26,5 @@ config.local.*
 # Test artifacts
 *.out
 coverage.*
+# Script engine output
+nzinga-report.json
