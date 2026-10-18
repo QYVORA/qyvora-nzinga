@@ -77,4 +77,4 @@ _No report-tier modules._
 | `nzinga sources` | List intelligence sources and their capabilities |
 | `nzinga target` | Manage collection targets |
 | `nzinga tui` | start the interactive terminal application |
-
+| `docs script <file>` | Run a `.qs` script with the shared scripting engine (`run`/`build` subcommands) |
