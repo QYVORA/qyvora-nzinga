@@ -11,6 +11,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"github.com/QYVORA/qyvora-nzinga/internal/banner"
 	"github.com/QYVORA/qyvora-nzinga/internal/config"
 	errs "github.com/QYVORA/qyvora-nzinga/internal/errors"
 	"github.com/QYVORA/qyvora-nzinga/internal/intelligence/sources"
@@ -43,7 +44,7 @@ only on targets you are authorized to evaluate.`
 var rootCmd = &cobra.Command{
 	Use:           "nzinga",
 	Short:         "Authorized OSINT and intelligence collection framework",
-	Long:          appDescription,
+	Long:          banner.Render() + "\n\n  " + banner.Tagline + " — " + version.CompanyName + "\n  " + version.CompanyURL + "\n  Built in " + version.CompanyCity + "\n\n" + appDescription,
 	Version:       version.String(),
 	SilenceUsage:  true,
 	SilenceErrors: true,
