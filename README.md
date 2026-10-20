@@ -15,8 +15,8 @@ NZINGA is one of six QYVORA security frameworks:
 | SHAKA     | Authorized Active Directory / Windows security| Royal blue & gold|
 | AKSUM     | Binary security / reverse engineering        | Gold             |
 | JABARI    | Authorized Android security assessment       | Lime green       |
-| TOHA3EE   | Local & network security assessment (MITM)   | Red              |
-| ANANSI    | Attack surface intelligence (web recon)      | Green/emerald    |
+| TOHA3EE   | Local & network security assessment          | Red              |
+| ANANSI    | Web application penetration testing           | Green/emerald    |
 | NZINGA    | OSINT / intelligence                         | Amber #FFB000    |
 
 ## Intent
