@@ -7,6 +7,15 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Changed
+
+- **Event transport** — migrated to `qyvora-events v0.2.0`, the
+  structured event contract used by `qyvora-platform` and
+  `qyvora-intelligence`.
+- **Capability document** — `capabilities -o json|yaml` now returns a
+  framework envelope (`framework`, `version`, `output_formats`,
+  `capabilities`, `commands`) instead of a bare array, matching the shared
+  QYVORA machine contract.
 ### Added
 
 - **Human-centric OSINT dork templates** — 430 username enumeration search
