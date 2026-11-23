@@ -38,7 +38,10 @@ and no authorization requirement.
 
 - Authorize a run: `nzinga assess -y domain:example.com`
 - Explore offline: `nzinga assess --sim`
-- Start the console (REPL on a real terminal, plain line reader when piped): `nzinga`
+- Interactive console: retired and unavailable in this release. The per-tool
+  TUI is excluded from builds (`//go:build ignore`) pending the redirect of
+  qyvora-tui to the future AI orchestration layer; a bare `nzinga` prints CLI
+  usage.
 
 ## Build
 
