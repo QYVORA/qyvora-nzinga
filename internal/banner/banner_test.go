@@ -7,7 +7,7 @@ import (
 )
 
 // ansi matches the SGR escape sequences the renderers may add.
-var ansi = regexp.MustCompile("\\x1b\\[[0-9;]*m")
+var ansi = regexp.MustCompile(`\x1b\[[0-9;]*m`)
 
 // TestArtNonEmpty guards against the banner being accidentally emptied.
 func TestArtNonEmpty(t *testing.T) {
