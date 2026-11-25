@@ -234,7 +234,7 @@ func TestLoadWithCustomMerge(t *testing.T) {
 	if err != nil {
 		t.Fatalf("creating temp file: %v", err)
 	}
-	defer os.Remove(tmpfile.Name())
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 	customYAML := `- id: test.custom.one
   category: username
@@ -253,7 +253,7 @@ func TestLoadWithCustomMerge(t *testing.T) {
 	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
 		t.Fatalf("writing temp file: %v", err)
 	}
-	tmpfile.Close()
+	_ = tmpfile.Close()
 
 	// Load with custom wordlist merged.
 	set, err := LoadWithCustom(tmpfile.Name(), true)
@@ -294,7 +294,7 @@ func TestLoadWithCustomOnly(t *testing.T) {
 	if err != nil {
 		t.Fatalf("creating temp file: %v", err)
 	}
-	defer os.Remove(tmpfile.Name())
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 	customYAML := `- id: custom.only.test
   category: username
@@ -306,7 +306,7 @@ func TestLoadWithCustomOnly(t *testing.T) {
 	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
 		t.Fatalf("writing temp file: %v", err)
 	}
-	tmpfile.Close()
+	_ = tmpfile.Close()
 
 	// Load with built-ins disabled.
 	set, err := LoadWithCustom(tmpfile.Name(), false)
@@ -334,13 +334,13 @@ func TestLoadWithCustomInvalidFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("creating temp file: %v", err)
 	}
-	defer os.Remove(tmpfile.Name())
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 	// Write invalid YAML.
 	if _, err := tmpfile.Write([]byte("not: valid: yaml: structure:")); err != nil {
 		t.Fatalf("writing temp file: %v", err)
 	}
-	tmpfile.Close()
+	_ = tmpfile.Close()
 
 	// Should fail to parse.
 	_, err = LoadWithCustom(tmpfile.Name(), true)
@@ -358,7 +358,7 @@ func TestLoadWithCustomMissingPlaceholder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("creating temp file: %v", err)
 	}
-	defer os.Remove(tmpfile.Name())
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 	// Dork without {target} placeholder.
 	customYAML := `- id: invalid.no.placeholder
@@ -371,7 +371,7 @@ func TestLoadWithCustomMissingPlaceholder(t *testing.T) {
 	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
 		t.Fatalf("writing temp file: %v", err)
 	}
-	tmpfile.Close()
+	_ = tmpfile.Close()
 
 	// Should fail validation.
 	_, err = LoadWithCustom(tmpfile.Name(), false)
@@ -389,7 +389,7 @@ func TestLoadWithCustomDuplicateID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("creating temp file: %v", err)
 	}
-	defer os.Remove(tmpfile.Name())
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 	// Use an ID that exists in built-in dorks (e.g., from general.yaml).
 	customYAML := `- id: general.admin
@@ -402,7 +402,7 @@ func TestLoadWithCustomDuplicateID(t *testing.T) {
 	if _, err := tmpfile.Write([]byte(customYAML)); err != nil {
 		t.Fatalf("writing temp file: %v", err)
 	}
-	tmpfile.Close()
+	_ = tmpfile.Close()
 
 	// Should fail due to duplicate ID with built-in.
 	_, err = LoadWithCustom(tmpfile.Name(), true)
