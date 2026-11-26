@@ -8,6 +8,10 @@ observations into claims, applies deterministic rules to surface findings, and
 produces reproducible evidence-backed reports in terminal, JSON, Markdown,
 HTML, and YAML.
 
+## Readiness
+
+**BETA.** NZINGA covers authorized OSINT collection, normalization, correlation, and reporting; it is not a scanner or exploitation tool. Implementation exists for exploration/testing but has not received final production-readiness approval. Its owner classification is `BETA` in the [Product Registry](../../../../knowledge/qyvora-docs/07-products/PRODUCT-REGISTRY.md); release tags do not promote it to `AVAILABLE`.
+
 NZINGA is one of six QYVORA security frameworks:
 
 | Framework | Focus                                        | Accent           |
